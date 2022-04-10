@@ -1,5 +1,8 @@
 # Structure CLI
 
+- gpodder2go serve
+- gpodder2go accounts create
+- gpodder2go accounts delete
 
 ### gpodder2go serve
 
@@ -14,11 +17,11 @@ gpodder2go serve ---database=DB_URL --addr=IP:PORT
 
 #### FLAGS
 
-  `--database`=`DB_URL`
-    The database to connect to in a db_uri scheme format
+> `--database`=`DB_URL`
+>> The database to connect to in a db_uri scheme format
 
-  `--addr`=`IP:PORT`
-    The Addr that the server will bind to
+> `--addr`=`IP:PORT`
+>> The Addr that the server will bind to
 
 #### EXAMPLES
 
@@ -39,13 +42,13 @@ gpodder2go accounts create [NAME] --password=[PASSWORD]
 
 #### POSITIONAL ARGUMENTS
 
-  `NAME`
-    Username to create
+> `NAME`
+>> Username to create
 
 #### FLAGS
 
-  `--password=`PASSWORD
-    Password for user
+> `--password=`PASSWORD
+>> Password for user
 
 #### FLAGS
 

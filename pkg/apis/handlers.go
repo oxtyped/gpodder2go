@@ -65,6 +65,33 @@ func (u *UserAPI) HandleLogin(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// HandleUserCreate takes in a username and password AND must only be able to be
+// run on the same instance as the API Server
+func (u *UserAPI) HandleUserCreate(w http.ResponseWriter, r *http.Request) {
+	// Takes in a form data of username and password
+	err := r.ParseForm()
+	if err != nil {
+		log.Printf("error parsing form: %#v", err)
+		w.WriteHeader(400)
+		return
+	}
+
+	username := r.FormValue("username")
+	password := r.FormValue("password")
+	email := r.FormValue("email")
+	name := r.FormValue("name")
+	err = u.Data.AddUser(username, password, email, name)
+	if err != nil {
+		log.Printf("error adding user: %#v", err)
+		w.WriteHeader(400)
+		return
+	}
+
+	w.WriteHeader(201)
+	return
+
+}
+
 // DeviceAPI
 func (d *DeviceAPI) HandleUpdateDevice(w http.ResponseWriter, r *http.Request) {
 
@@ -73,6 +100,8 @@ func (d *DeviceAPI) HandleUpdateDevice(w http.ResponseWriter, r *http.Request) {
 
 	username := chi.URLParam(r, "username")
 	deviceName := chi.URLParam(r, "deviceid")
+
+	log.Printf("username is %s, deviceName is %s", username, deviceName)
 
 	ddr := &DeviceDataRequest{}
 

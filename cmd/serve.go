@@ -4,8 +4,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/oxtyped/gpodder2go/pkg/apis"
 	"github.com/oxtyped/gpodder2go/pkg/data"
 	"github.com/oxtyped/gpodder2go/pkg/store"
@@ -38,6 +38,9 @@ var serveCmd = &cobra.Command{
 		deviceAPI := apis.DeviceAPI{Store: store, Data: dataInterface}
 		subscriptionAPI := apis.SubscriptionAPI{Data: dataInterface}
 		episodeAPI := apis.EpisodeAPI{Data: dataInterface}
+		userAPI := apis.UserAPI{Data: dataInterface}
+
+		// TODO: Add the authentication middlewares for the various places
 
 		// auth
 		r.Post("/api/2/auth/{username}/login.json", func(w http.ResponseWriter, r *http.Request) {
@@ -46,7 +49,11 @@ var serveCmd = &cobra.Command{
 
 		})
 
+		r.Post("/api/internal/users", userAPI.HandleUserCreate)
+
 		// device
+		r.Post("/api/2/devices/{username}/{deviceid}.json", deviceAPI.HandleUpdateDevice)
+
 		r.Get("/api/2/devices/{username}.json", func(w http.ResponseWriter, r *http.Request) {
 
 			w.WriteHeader(200)
@@ -54,7 +61,6 @@ var serveCmd = &cobra.Command{
 			return
 
 		})
-		r.Post("/api/2/devices/{username}/{deviceid}.json", deviceAPI.HandleUpdateDevice)
 
 		// subscriptions
 		r.Get("/api/2/subscriptions/{username}/{deviceid}.{format}", subscriptionAPI.HandleGetDeviceSubscriptionChange)

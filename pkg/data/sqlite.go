@@ -37,6 +37,16 @@ func (s *SQLite) GetUserIdFromName(username string) (int, error) {
 
 }
 
+func (s *SQLite) AddUser(username, password, email, name string) error {
+
+	db := s.db
+	_, err := db.Exec("INSERT INTO users (username, password, email, name) VALUES ($1, $2, $3, $4)", username, password, email, name)
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
 func (s *SQLite) AddDevice(username string, deviceName string, caption string, deviceType string) error {
 
 	db := s.db

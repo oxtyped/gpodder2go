@@ -72,20 +72,20 @@ func (s *SQLite) RetrieveDevices(username string) ([]Device, error) {
 
 	userId, err := s.GetUserIdFromName(username)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error getting user id from name")
 	}
 
-	rows, err := db.Query("SELECT (user_id, name, type, caption) from devices WHERE user_id = ?", userId)
+	rows, err := db.Query("SELECT name, type, caption from devices WHERE user_id = ?", userId)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error getting devices from user")
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		i := Device{}
-		err := rows.Scan(&i.User, &i.Name, &i.Type, &i.Caption)
+		err := rows.Scan(&i.Name, &i.Type, &i.Caption)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "error scanning devices from query")
 		}
 
 		data = append(data, i)

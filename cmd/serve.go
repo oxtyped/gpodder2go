@@ -53,14 +53,7 @@ var serveCmd = &cobra.Command{
 
 		// device
 		r.Post("/api/2/devices/{username}/{deviceid}.json", deviceAPI.HandleUpdateDevice)
-
-		r.Get("/api/2/devices/{username}.json", func(w http.ResponseWriter, r *http.Request) {
-
-			w.WriteHeader(200)
-			w.Write([]byte(`[{"id":"DESKTOP-DOB7RHP", "caption": "gPodder", "subscriptions": 100, "type": "laptop"}]`))
-			return
-
-		})
+		r.Get("/api/2/devices/{username}.json", deviceAPI.HandleGetDevices)
 
 		// subscriptions
 		r.Get("/api/2/subscriptions/{username}/{deviceid}.{format}", subscriptionAPI.HandleGetDeviceSubscriptionChange)

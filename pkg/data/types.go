@@ -29,6 +29,7 @@ type Subscription struct {
 
 type Device struct {
 	User    *User  `json:"user"`
+	Id      string `json:"id"`
 	Name    string `json:"name"`
 	Type    string `json:"type"`
 	Caption string `json:"caption"`

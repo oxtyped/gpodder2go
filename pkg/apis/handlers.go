@@ -140,15 +140,52 @@ func (d *DeviceAPI) HandleUpdateDevice(w http.ResponseWriter, r *http.Request) {
 
 func (d *DeviceAPI) HandleGetDevices(w http.ResponseWriter, r *http.Request) {
 
+	type GetDevicesOutput struct {
+		Name          string `json:"id"`
+		Caption       string `json:"caption"`
+		Type          string `json:"type"`
+		Subscriptions int    `json:"subscriptions"`
+	}
+
+	var deviceSlice []GetDevicesOutput
+
 	username := chi.URLParam(r, "username")
-	_, err := d.Data.RetrieveDevices(username)
+	devices, err := d.Data.RetrieveDevices(username)
 	if err != nil {
-		w.WriteHeader(200)
+		log.Printf("error retrieving devices: %#v", err)
+		w.WriteHeader(400)
 		return
 	}
 
-	return
+	for _, v := range devices {
+		subs, err := d.Data.RetrieveSubscriptionHistory(username, v.Name, time.Time{})
+		if err != nil {
+			log.Printf("error retrieving subscription history: %#v", err)
+			continue
+		}
 
+		// calculate what's the diff
+		add, _ := data.SubscriptionDiff(subs)
+		device := GetDevicesOutput{
+			Name:          v.Name,
+			Caption:       v.Caption,
+			Type:          v.Type,
+			Subscriptions: len(add),
+		}
+
+		deviceSlice = append(deviceSlice, device)
+
+	}
+
+	devicesOutput, err := json.Marshal(deviceSlice)
+	if err != nil {
+		log.Printf("error marshalling devices: %#v", err)
+		w.WriteHeader(400)
+		return
+	}
+
+	log.Printf("output is %#v", string(devicesOutput))
+	w.Write(devicesOutput)
 }
 
 // TODO: Handle Device Subscription Change

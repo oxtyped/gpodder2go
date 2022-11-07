@@ -373,7 +373,6 @@ func (s *SubscriptionAPI) HandleGetSubscription(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	log.Printf("output: %#v", xml)
 	w.Write([]byte(xml))
 
 }

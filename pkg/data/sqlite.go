@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"strconv"
+	"sync"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -122,7 +123,7 @@ func (s *SQLite) GetDevicesFromUsername(username string) ([]string, error) {
 
 	devices := []string{}
 
-	rows, err := db.Query("select devices.name from devices, users WHERE devices.user_id = users.id AND users.name = ?", username)
+	rows, err := db.Query("select devices.name from devices, users WHERE devices.user_id = users.id AND users.username = ?", username)
 	if err != nil {
 		return nil, err
 	}
@@ -202,6 +203,8 @@ func (s *SQLite) RetrieveAllDeviceSubscriptions(username string) (string, error)
 		return "", err
 	}
 
+	log.Printf("Retrieving %d devices from user %s", len(devices), username)
+
 	for _, v := range devices {
 		subs, err := s.RetrieveSubscriptionHistory(username, v, time.Time{})
 		if err != nil {
@@ -216,15 +219,21 @@ func (s *SQLite) RetrieveAllDeviceSubscriptions(username string) (string, error)
 	}
 	allDevices = unique(allDevices)
 
-	log.Printf("allDevices count is %#v", len(allDevices))
+	var wg sync.WaitGroup
 
-	o := opml.NewOPMLFromBlank("test")
+	o := opml.NewOPMLFromBlank("tmpfile")
 	for _, v := range allDevices {
-		err := o.AddRSSFromURL(v, "title")
-		if err != nil {
-			log.Printf("error adding RSS feed from URL: %#v", err)
-		}
+		v := v
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			o.AddRSSFromURL(v, 2*time.Second)
+		}()
 	}
+
+	wg.Wait()
 
 	return o.XML()
 
@@ -244,9 +253,9 @@ func (s *SQLite) RetrieveDeviceSubscriptions(username string, deviceName string)
 	// calculate what's the diff
 	add, _ := SubscriptionDiff(subs)
 
-	o := opml.NewOPMLFromBlank("test")
+	o := opml.NewOPMLFromBlank("tmpfile")
 	for _, v := range add {
-		err := o.AddRSSFromURL(v, "title")
+		err := o.AddRSSFromURL(v, 2*time.Second)
 		if err != nil {
 			log.Printf("error adding RSS feed from URL: %#v", err)
 		}

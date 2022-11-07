@@ -24,3 +24,11 @@ gpodder2go is a simple self-hosted, golang, drop-in replacement for gpodder/mygp
 ### Non-goals
 
 gpodder2go will not come with it a web frontend and will solely be an API server. While this is not totally fixed and may change in the future, the current plan is to not handle anything frontend.
+
+### Development
+
+No real dependencies other than having sqlite3 installed.
+
+```
+$ go run main.go
+```

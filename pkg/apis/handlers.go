@@ -184,7 +184,6 @@ func (d *DeviceAPI) HandleGetDevices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("output is %#v", string(devicesOutput))
 	w.Write(devicesOutput)
 }
 
@@ -261,8 +260,6 @@ func (s *SubscriptionAPI) HandleGetDeviceSubscriptionChange(w http.ResponseWrite
 	subscriptionChanges.Add = add
 	subscriptionChanges.Remove = remove
 
-	log.Printf("add is %#v and remove is %#v", add, remove)
-
 	outputPayload, err := json.Marshal(subscriptionChanges)
 	if err != nil {
 		log.Printf("error marshalling subscription changes into JSON string: %#v", err)
@@ -303,8 +300,6 @@ func (s *SubscriptionAPI) HandleUploadDeviceSubscriptionChange(w http.ResponseWr
 		w.WriteHeader(400)
 		return
 	}
-
-	log.Printf("subscription changes is %#v", subscriptionChanges)
 
 	addSlice := subscriptionChanges.Add
 	removeSlice := subscriptionChanges.Remove
@@ -358,7 +353,6 @@ func (s *SubscriptionAPI) HandleUploadDeviceSubscriptionChange(w http.ResponseWr
 		return
 	}
 	w.WriteHeader(200)
-	log.Printf("outputbytes is %#v", string(outputBytes))
 	w.Write(outputBytes)
 	return
 
@@ -395,17 +389,12 @@ func (s *SubscriptionAPI) HandleGetDeviceSubscription(w http.ResponseWriter, r *
 
 // API Endpoint: POST and PUT /subscriptions/{username}/{deviceid}.{format}
 func (s *SubscriptionAPI) HandleUploadDeviceSubscription(w http.ResponseWriter, r *http.Request) {
-	// username
-	// deviceid
-	// format
 
 	username := chi.URLParam(r, "username")
 	deviceId := chi.URLParam(r, "deviceid")
 	format := chi.URLParam(r, "format")
 	ts := data.CustomTimestamp{}
 	ts.Time = time.Now()
-
-	log.Printf("%v, %v, %v", username, deviceId, format)
 
 	switch r.Method {
 	case "POST":
@@ -499,7 +488,6 @@ func (e *EpisodeAPI) HandleUploadEpisodeAction(w http.ResponseWriter, r *http.Re
 
 	b, _ := ioutil.ReadAll(r.Body)
 
-	log.Printf("output is strings: %#v", string(b))
 	var arr []data.EpisodeAction
 
 	pairz := []Pair{}
@@ -512,7 +500,6 @@ func (e *EpisodeAPI) HandleUploadEpisodeAction(w http.ResponseWriter, r *http.Re
 	}
 
 	for _, data := range arr {
-		log.Printf("episode user: %#v and data: %#v AND REAL DATA: %#v \n", username, data, e.Data)
 		err := e.Data.AddEpisodeActionHistory(username, data)
 		if err != nil {
 			log.Printf("error adding episode action into history: %#v", err)

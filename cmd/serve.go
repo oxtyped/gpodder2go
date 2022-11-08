@@ -1,13 +1,16 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/oxtyped/gpodder2go/pkg/apis"
 	"github.com/oxtyped/gpodder2go/pkg/data"
+	m2 "github.com/oxtyped/gpodder2go/pkg/middleware"
 	"github.com/oxtyped/gpodder2go/pkg/store"
 	"github.com/spf13/cobra"
 )
@@ -43,33 +46,49 @@ var serveCmd = &cobra.Command{
 		// TODO: Add the authentication middlewares for the various places
 
 		// auth
-		r.Post("/api/2/auth/{username}/login.json", func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(200)
-			return
+		r.Group(func(r chi.Router) {
+			r.Post("/api/2/auth/{username}/login.json", func(w http.ResponseWriter, r *http.Request) {
+				username, _, ok := r.BasicAuth()
+				if !ok {
+					w.WriteHeader(401)
+					return
+				}
+				expire := time.Now().Add(20 * time.Minute)
+				cookie := http.Cookie{Name: "sessionid", Value: fmt.Sprintf("%s", username), Path: "/", SameSite: http.SameSiteLaxMode, Expires: expire}
 
-		})
+				http.SetCookie(w, &cookie)
+				w.Write([]byte("{}"))
+				//			w.WriteHeader(200)
+				return
 
-		r.Post("/api/internal/users", userAPI.HandleUserCreate)
+			})
+		},
+		)
 
-		// device
-		r.Post("/api/2/devices/{username}/{deviceid}.json", deviceAPI.HandleUpdateDevice)
-		r.Get("/api/2/devices/{username}.json", deviceAPI.HandleGetDevices)
+		r.Group(func(r chi.Router) {
+			r.Use(m2.CheckBasicAuth)
+			r.Post("/api/internal/users", userAPI.HandleUserCreate)
 
-		// subscriptions
-		r.Get("/api/2/subscriptions/{username}/{deviceid}.{format}", subscriptionAPI.HandleGetDeviceSubscriptionChange)
-		//	r.Put("/api/2/subscriptions/{username}/{deviceid}.{format}", subscriptionAPI.HandleUploadDeviceSubscription)
-		r.Post("/api/2/subscriptions/{username}/{deviceid}.{format}", subscriptionAPI.HandleUploadDeviceSubscriptionChange)
+			// device
+			r.Post("/api/2/devices/{username}/{deviceid}.json", deviceAPI.HandleUpdateDevice)
+			r.Get("/api/2/devices/{username}.json", deviceAPI.HandleGetDevices)
 
-		r.Put("/subscriptions/{username}/{deviceid}.{format}", subscriptionAPI.HandleUploadDeviceSubscription)
-		r.Get("/subscriptions/{username}/{deviceid}.{format}", subscriptionAPI.HandleGetDeviceSubscription)
-		r.Get("/subscriptions/{username}.{format}", subscriptionAPI.HandleGetSubscription)
+			// subscriptions
+			r.Get("/api/2/subscriptions/{username}/{deviceid}.{format}", subscriptionAPI.HandleGetDeviceSubscriptionChange)
+			//	r.Put("/api/2/subscriptions/{username}/{deviceid}.{format}", subscriptionAPI.HandleUploadDeviceSubscription)
+			r.Post("/api/2/subscriptions/{username}/{deviceid}.{format}", subscriptionAPI.HandleUploadDeviceSubscriptionChange)
 
-		// episodes
-		r.Get("/api/2/episodes/{username}.{format}", episodeAPI.HandleEpisodeAction)
-		r.Post("/api/2/episodes/{username}.{format}", episodeAPI.HandleUploadEpisodeAction)
+			r.Put("/subscriptions/{username}/{deviceid}.{format}", subscriptionAPI.HandleUploadDeviceSubscription)
+			r.Get("/subscriptions/{username}/{deviceid}.{format}", subscriptionAPI.HandleGetDeviceSubscription)
+			r.Get("/subscriptions/{username}.{format}", subscriptionAPI.HandleGetSubscription)
 
-		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("welcome"))
+			// episodes
+			r.Get("/api/2/episodes/{username}.{format}", episodeAPI.HandleEpisodeAction)
+			r.Post("/api/2/episodes/{username}.{format}", episodeAPI.HandleUploadEpisodeAction)
+
+			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte("welcome"))
+			})
 		})
 
 		log.Printf("💻 Starting server at %s", addr)

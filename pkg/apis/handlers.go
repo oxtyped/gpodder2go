@@ -1,10 +1,13 @@
 package apis
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
 	"os"
 	"strconv"
 	"time"
 
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -44,23 +47,36 @@ func (p PairArray) String() string {
 	return astring
 }
 
-// UserAPI
+// HandleLogin uses Basic Auth to check on a user's credentials and return a
+// cookie session that will be used for subsequent calls
 func (u *UserAPI) HandleLogin(w http.ResponseWriter, r *http.Request) {
-	//db := u.Data
 
-	//token, err := db.RetrieveLoginToken(username, password)
-	//if err != nil {
+	db := u.Data
 
-	//	w.WriteHeader(400)
-	//	return
-	//}
+	username, password, ok := r.BasicAuth()
+	if !ok {
+		w.WriteHeader(401)
+		return
+	}
+	expire := time.Now().Add(2 * time.Minute)
 
-	//cookie := &http.Cookie{
-	//	Name:  "sessionid",
-	//	Value: token,
-	//}
-	//http.SetCookie(w, cookie)
+	if !db.CheckUserPassword(username, password) {
+		w.WriteHeader(401)
+		return
+	}
 
+	mac := hmac.New(sha256.New, []byte(u.verifierSecretKey))
+	mac.Write([]byte(username))
+	sig := mac.Sum(nil)
+
+	preEncoded := fmt.Sprintf("%s.%s", sig, username)
+
+	hash := base64.StdEncoding.EncodeToString([]byte(preEncoded))
+
+	cookie := http.Cookie{Name: "sessionid", Value: hash, Path: "/", SameSite: http.SameSiteLaxMode, Expires: expire}
+
+	http.SetCookie(w, &cookie)
+	w.WriteHeader(200)
 	return
 
 }
@@ -217,7 +233,6 @@ func (s *SubscriptionAPI) HandleGetDeviceSubscriptionChange(w http.ResponseWrite
 		return
 
 	}
-	log.Printf("since is %#v", since)
 
 	if format != "json" {
 		log.Printf("error uploading device subscription changes as format is expecting JSON but got %#v", format)
@@ -267,7 +282,6 @@ func (s *SubscriptionAPI) HandleGetDeviceSubscriptionChange(w http.ResponseWrite
 		return
 	}
 
-	log.Printf("outputPayload is %#v", string(outputPayload))
 	w.WriteHeader(200)
 	w.Write(outputPayload)
 	return
@@ -291,7 +305,6 @@ func (s *SubscriptionAPI) HandleUploadDeviceSubscriptionChange(w http.ResponseWr
 		w.WriteHeader(400)
 		return
 	}
-
 	subscriptionChanges := &SubscriptionChanges{}
 	err := json.NewDecoder(r.Body).Decode(&subscriptionChanges)
 	if err != nil {
@@ -473,7 +486,6 @@ func (e *EpisodeAPI) HandleEpisodeAction(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	w.WriteHeader(200)
-	log.Printf("%#v", string(episodeActionOutputBytes))
 	w.Write(episodeActionOutputBytes)
 	return
 

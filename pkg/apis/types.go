@@ -25,7 +25,15 @@ type EpisodeAPI struct {
 }
 
 type UserAPI struct {
-	Data data.DataInterface
+	Data              data.DataInterface
+	verifierSecretKey string
+}
+
+func NewUserAPI(data data.DataInterface, verifierSecretKey string) *UserAPI {
+	return &UserAPI{
+		Data:              data,
+		verifierSecretKey: verifierSecretKey,
+	}
 }
 
 // Incoming Payload

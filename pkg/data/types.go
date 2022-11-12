@@ -7,6 +7,7 @@ import (
 
 type DataInterface interface {
 	AddUser(string, string, string, string) error
+	CheckUserPassword(string, string) bool
 	AddSubscriptionHistory(Subscription) error
 	RetrieveSubscriptionHistory(string, string, time.Time) ([]Subscription, error)
 	AddEpisodeActionHistory(username string, e EpisodeAction) error

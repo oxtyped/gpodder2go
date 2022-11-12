@@ -4,14 +4,15 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
+	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/oxtyped/gpodder2go/pkg/apis"
 	"github.com/oxtyped/gpodder2go/pkg/data"
-	m2 "github.com/oxtyped/gpodder2go/pkg/middleware"
 	"github.com/oxtyped/gpodder2go/pkg/store"
+
+	m2 "github.com/oxtyped/gpodder2go/pkg/middleware"
 	"github.com/spf13/cobra"
 )
 
@@ -28,6 +29,14 @@ var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Start gpodder2go server",
 	Run: func(cmd *cobra.Command, args []string) {
+
+		verifierSecretKey := os.Getenv("VERIFIER_SECRET_KEY")
+
+		if verifierSecretKey == "" {
+			fmt.Println("VERIFIER_SECRET_KEY is missing")
+			return
+		}
+
 		r := chi.NewRouter()
 		r.Use(middleware.RequestID)
 		r.Use(middleware.RealIP)
@@ -41,32 +50,17 @@ var serveCmd = &cobra.Command{
 		deviceAPI := apis.DeviceAPI{Store: store, Data: dataInterface}
 		subscriptionAPI := apis.SubscriptionAPI{Data: dataInterface}
 		episodeAPI := apis.EpisodeAPI{Data: dataInterface}
-		userAPI := apis.UserAPI{Data: dataInterface}
+		userAPI := apis.NewUserAPI(dataInterface, verifierSecretKey)
 
 		// TODO: Add the authentication middlewares for the various places
 
 		// auth
 		r.Group(func(r chi.Router) {
-			r.Post("/api/2/auth/{username}/login.json", func(w http.ResponseWriter, r *http.Request) {
-				username, _, ok := r.BasicAuth()
-				if !ok {
-					w.WriteHeader(401)
-					return
-				}
-				expire := time.Now().Add(20 * time.Minute)
-				cookie := http.Cookie{Name: "sessionid", Value: fmt.Sprintf("%s", username), Path: "/", SameSite: http.SameSiteLaxMode, Expires: expire}
-
-				http.SetCookie(w, &cookie)
-				w.Write([]byte("{}"))
-				//			w.WriteHeader(200)
-				return
-
-			})
-		},
-		)
+			r.Post("/api/2/auth/{username}/login.json", userAPI.HandleLogin)
+		})
 
 		r.Group(func(r chi.Router) {
-			r.Use(m2.CheckBasicAuth)
+			r.Use(m2.Verifier(verifierSecretKey))
 			r.Post("/api/internal/users", userAPI.HandleUserCreate)
 
 			// device

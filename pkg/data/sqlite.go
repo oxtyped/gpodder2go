@@ -38,6 +38,24 @@ func (s *SQLite) GetUserIdFromName(username string) (int, error) {
 
 }
 
+func (s *SQLite) CheckUserPassword(username, password string) bool {
+
+	var count int
+	db := s.db
+	err := db.QueryRow("SELECT count(*) from users WHERE username = ? AND password = ?", username, password).Scan(&count)
+	if err != nil {
+		return false
+	}
+
+	if count == 1 {
+		return true
+	}
+
+	// returning false here to explicitly ensure that only if user is checked that
+	// it returns true
+	return false
+}
+
 func (s *SQLite) AddUser(username, password, email, name string) error {
 
 	db := s.db

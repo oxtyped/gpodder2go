@@ -4,7 +4,7 @@ gpodder2go is a simple self-hosted, golang, drop-in replacement for gpodder/mygp
 
 ## Goal
 
-- To build an easily deployable and private self-hosted drop-in replacement for gpodder.net to facilitate private and small group sychronization of podcast subscriptions with fediverse support
+To build an easily deployable and private self-hosted drop-in replacement for gpodder.net to facilitate private and small group sychronization of podcast subscriptions with fediverse support
 
 ### Current Goal
 
@@ -19,11 +19,29 @@ gpodder2go is a simple self-hosted, golang, drop-in replacement for gpodder/mygp
 
 ### Stretch Goal
 
-- To join gpodder2go with the fediverse to allow for independent gpodder2go servers to communicate with one another to discover and share like-minded podcasts that the communities are listening to
+To join gpodder2go with the fediverse to allow for independent gpodder2go servers to communicate with one another to discover and share like-minded podcasts that the communities are listening to
 
 ### Non-goals
 
 gpodder2go will not come with it a web frontend and will solely be an API server. While this is not totally fixed and may change in the future, the current plan is to not handle anything frontend.
+
+### Limitations
+
+Right now it appears that the gpodder client doesn't fully support auth (see: https://github.com/gpodder/gpodder/issues/617 and https://github.com/gpodder/gpodder/issues/1358) even though the specification (https://gpoddernet.readthedocs.io/en/latest/api/reference/auth.html) explicitly defines it.
+
+As such, in order to allow gpoddcer client access to the gpodder server, please run `gpodder2go` in non-auth mode.
+
+```
+$ gpodder2go server --no-auth
+```
+
+**Note**: This will allow anyone with access to retrieve your susbcriptions data and list.
+
+Alternatively, you can switch to use [Antennapod](https://antennapod.org/) which has implemented the login spec which gpodder2go currently supports.
+
+### Supports
+
+- [Antennapod](https://antennapod.org/)
 
 ### Development
 

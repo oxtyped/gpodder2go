@@ -41,8 +41,10 @@ $ ./gpodder2go init
 
 4. Start the gpodder server
 ```
-$ gpodder2go serve
+$ VERIFIER_SECRET_KEY="" gpodder2go serve
 ```
+
+**Note**: `VERIFIER_SECRET_KEY` is a required env var. This value will be used to sign and verify the sessionid which will be used to authenticate users.
 
 5. Create a new user
 ```

@@ -18,10 +18,12 @@ import (
 
 var database string
 var addr string
+var noAuth bool
 
 func init() {
 	serveCmd.Flags().StringVarP(&database, "database", "d", "g2g.db", "filename of sqlite3 database to use")
 	serveCmd.Flags().StringVarP(&addr, "addr", "b", "localhost:3005", "ip:port for server to be binded to")
+	serveCmd.Flags().BoolVarP(&noAuth, "no-auth", "", false, "disable authentication")
 	rootCmd.AddCommand(serveCmd)
 }
 
@@ -60,7 +62,7 @@ var serveCmd = &cobra.Command{
 		})
 
 		r.Group(func(r chi.Router) {
-			r.Use(m2.Verifier(verifierSecretKey))
+			r.Use(m2.Verifier(verifierSecretKey, noAuth))
 			r.Post("/api/internal/users", userAPI.HandleUserCreate)
 
 			// device
@@ -81,7 +83,8 @@ var serveCmd = &cobra.Command{
 			r.Post("/api/2/episodes/{username}.{format}", episodeAPI.HandleUploadEpisodeAction)
 
 			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-				w.Write([]byte("welcome"))
+				w.WriteHeader(200)
+				return
 			})
 		})
 

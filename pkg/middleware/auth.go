@@ -9,10 +9,15 @@ import (
 	"strings"
 )
 
-func Verify(key string) func(http.Handler) http.Handler {
+func Verify(key string, noAuth bool) func(http.Handler) http.Handler {
 
 	return func(next http.Handler) http.Handler {
 		hfn := func(w http.ResponseWriter, r *http.Request) {
+			if noAuth {
+				next.ServeHTTP(w, r)
+				return
+			}
+
 			ck, err := r.Cookie("sessionid")
 			if err != nil {
 				w.WriteHeader(400)
@@ -47,9 +52,9 @@ func Verify(key string) func(http.Handler) http.Handler {
 	}
 }
 
-func Verifier(key string) func(http.Handler) http.Handler {
+func Verifier(key string, noAuth bool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		return Verify(key)(next)
+		return Verify(key, noAuth)(next)
 	}
 }
 

@@ -25,17 +25,42 @@ To join gpodder2go with the fediverse to allow for independent gpodder2go server
 
 gpodder2go will not come with it a web frontend and will solely be an API server. While this is not totally fixed and may change in the future, the current plan is to not handle anything frontend.
 
+### Database Requirement
+
+gpodder2go requires a database to manage the subscription and user states. Currently the project only supports SQLite with plans to support other databases. The current database mechanism is managed by a [DataInterface](https://github.com/oxtyped/gpodder2go/blob/main/pkg/data/types.go#L8-L21) which allows for quick easy support of new database stores when needed.
+
+### Quickstart
+
+1. Pull the entire source code
+2. Download the [respective binary](https://github.com/oxtyped/gpodder2go/releases) and put it in the project repository root
+3. Initialize the necessary database and configurations
+
+```
+$ ./gpodder2go init
+```
+
+4. Start the gpodder server
+```
+$ gpodder2go serve
+```
+
+5. Create a new user
+```
+$ gpodder2go accounts create <username> --email="<email>" --name="<display_name>" --password="<password>"
+```
+**Note**: Each of the commands have a bunch of flags that you can use, to view the full list of available flags, use `--help` or `-h` after the commands.
+
 ### Limitations
 
 Right now it appears that the gpodder client doesn't fully support auth (see: https://github.com/gpodder/gpodder/issues/617 and https://github.com/gpodder/gpodder/issues/1358) even though the specification (https://gpoddernet.readthedocs.io/en/latest/api/reference/auth.html) explicitly defines it.
 
-As such, in order to allow gpoddcer client access to the gpodder server, please run `gpodder2go` in non-auth mode.
+In order to allow gpoddcer client access to the gpodder server, please run `gpodder2go` in non-auth mode.
 
 ```
 $ gpodder2go server --no-auth
 ```
 
-**Note**: This will allow anyone with access to retrieve your susbcriptions data and list.
+**Note**: This will allow anyone with access to retrieve your susbcriptions data and list. Please take the necessary steps to secure your instance and data.
 
 Alternatively, you can switch to use [Antennapod](https://antennapod.org/) which has implemented the login spec which gpodder2go currently supports.
 

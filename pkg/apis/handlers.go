@@ -194,11 +194,18 @@ func (d *DeviceAPI) HandleGetDevices(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	devicesOutput, err := json.Marshal(deviceSlice)
-	if err != nil {
-		log.Printf("error marshalling devices: %#v", err)
-		w.WriteHeader(400)
-		return
+	var devicesOutput []byte
+
+	if len(deviceSlice) == 0 {
+		devicesOutput = []byte("[]")
+	} else {
+
+		devicesOutput, err = json.Marshal(deviceSlice)
+		if err != nil {
+			log.Printf("error marshalling devices: %#v", err)
+			w.WriteHeader(400)
+			return
+		}
 	}
 
 	w.Write(devicesOutput)

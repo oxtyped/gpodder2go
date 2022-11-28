@@ -56,7 +56,7 @@ $ gpodder2go accounts create <username> --email="<email>" --name="<display_name>
 
 Right now it appears that the gpodder client doesn't fully support auth (see: https://github.com/gpodder/gpodder/issues/617 and https://github.com/gpodder/gpodder/issues/1358) even though the specification (https://gpoddernet.readthedocs.io/en/latest/api/reference/auth.html) explicitly defines it.
 
-In order to allow gpoddcer client access to the gpodder server, please run `gpodder2go` in non-auth mode.
+In order to allow gpodder client access to the gpodder server, please run `gpodder2go` in non-auth mode.
 
 ```
 $ gpodder2go server --no-auth

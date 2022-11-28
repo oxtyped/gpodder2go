@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -29,7 +30,8 @@ var accountsCreateCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		username := args[0]
 		// make apiAddr separate it out into username/port
-		val := url.Values{"username": {username}, "password": {"password"}, "email": {email}, "name": {name}}
+
+		val := url.Values{"username": {username}, "password": {password}, "email": {email}, "name": {name}}
 
 		addr := fmt.Sprintf("http://%s/api/internal/users", apiAddr)
 		res, err := http.PostForm(addr, val)
@@ -39,7 +41,9 @@ var accountsCreateCmd = &cobra.Command{
 		}
 
 		if res.StatusCode != 201 {
-			log.Println("Could not create status code")
+			body, _ := ioutil.ReadAll(res.Body)
+			log.Printf("Could not create user: %s", string(body))
+			return
 		}
 
 		log.Printf("😍 User %s created!", username)

@@ -100,6 +100,7 @@ func (u *UserAPI) HandleUserCreate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("error adding user: %#v", err)
 		w.WriteHeader(400)
+		w.Write([]byte(err.Error()))
 		return
 	}
 

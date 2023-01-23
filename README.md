@@ -77,3 +77,14 @@ No real dependencies other than having sqlite3 installed.
 ```
 $ go run main.go
 ```
+
+### Distribution Packages
+
+#### Gentoo
+Available with a custom overlay at:
+https://github.com/seigakaku/gentoo_ebuilds/tree/master/media-sound/gpodder2go
+
+Add with:
+```
+# eselect repository add seiga git https://github.com/seigakaku/gentoo_ebuilds
+```

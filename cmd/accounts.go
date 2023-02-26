@@ -8,7 +8,6 @@ var apiAddr string
 
 func init() {
 	rootCmd.AddCommand(accountsCmd)
-	rootCmd.PersistentFlags().StringVarP(&apiAddr, "api-addr", "", "localhost:3005", "api addr")
 }
 
 var accountsCmd = &cobra.Command{

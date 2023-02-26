@@ -10,12 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var dbFile string
-
 func init() {
-	initCmd.Flags().StringVarP(&dbFile, "db", "d", "g2g.db", "filename of sqlite3 database to use")
-	//serveCmd.Flags().StringVarP(&addr, "addr", "b", "localhost:3005", "ip:port for server to be binded to")
-	//serveCmd.Flags().BoolVarP(&noAuth, "no-auth", "", false, "disable authentication")
 	rootCmd.AddCommand(initCmd)
 }
 
@@ -26,7 +21,7 @@ var initCmd = &cobra.Command{
 
 		// create sqlite file
 		// run migration file
-		db, err := sql.Open("sqlite3", dbFile)
+		db, err := sql.Open("sqlite3", database)
 		if err != nil {
 			log.Fatal(err)
 		}

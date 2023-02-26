@@ -1,12 +1,9 @@
 package cmd
 
 import (
-	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
-	"net/url"
 
+	"github.com/oxtyped/gpodder2go/pkg/data"
 	"github.com/spf13/cobra"
 )
 
@@ -29,21 +26,12 @@ var accountsCreateCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		username := args[0]
-		// make apiAddr separate it out into username/port
 
-		val := url.Values{"username": {username}, "password": {password}, "email": {email}, "name": {name}}
+		dataInterface := data.NewSQLite(database)
 
-		addr := fmt.Sprintf("http://%s/api/internal/users", apiAddr)
-		res, err := http.PostForm(addr, val)
+		err := dataInterface.AddUser(username, password, email, name)
 		if err != nil {
-			log.Printf("error reaching API server: %#v", err.Error())
-			return
-		}
-
-		if res.StatusCode != 201 {
-			body, _ := ioutil.ReadAll(res.Body)
-			log.Printf("Could not create user: %s", string(body))
-			return
+			log.Fatalf("could not create user: %#v", err)
 		}
 
 		log.Printf("😍 User %s created!", username)

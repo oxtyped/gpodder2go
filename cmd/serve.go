@@ -16,12 +16,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var database string
 var addr string
 var noAuth bool
 
 func init() {
-	serveCmd.Flags().StringVarP(&database, "database", "d", "g2g.db", "filename of sqlite3 database to use")
 	serveCmd.Flags().StringVarP(&addr, "addr", "b", "localhost:3005", "ip:port for server to be binded to")
 	serveCmd.Flags().BoolVarP(&noAuth, "no-auth", "", false, "disable authentication")
 	rootCmd.AddCommand(serveCmd)

@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/oxtyped/go-opml/opml"
 	"github.com/pkg/errors"
+	_ "modernc.org/sqlite"
 )
 
 type SQLite struct {
@@ -17,7 +17,7 @@ type SQLite struct {
 }
 
 func NewSQLite(file string) *SQLite {
-	db, err := sql.Open("sqlite3", file)
+	db, err := sql.Open("sqlite", file)
 	if err != nil {
 		panic("failed to connect database")
 	}

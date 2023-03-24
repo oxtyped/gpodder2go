@@ -26,7 +26,7 @@ gpodder2go serve ---database=DB_URL --addr=IP:PORT
 #### EXAMPLES
 
 ```
-$ gpodder2go serve --database=sqlite3://g2g.db --addr=0.0.0.0:3005
+$ gpodder2go serve --database=sqlite://g2g.db --addr=0.0.0.0:3005
 ```
 
 ### gpodder2go accounts create

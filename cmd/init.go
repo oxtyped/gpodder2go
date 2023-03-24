@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/sqlite3"
+	"github.com/golang-migrate/migrate/v4/database/sqlite"
 	"github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/spf13/cobra"
 )
@@ -21,13 +21,13 @@ var initCmd = &cobra.Command{
 
 		// create sqlite file
 		// run migration file
-		db, err := sql.Open("sqlite3", database)
+		db, err := sql.Open("sqlite", database)
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer db.Close()
 
-		instance, err := sqlite3.WithInstance(db, &sqlite3.Config{})
+		instance, err := sqlite.WithInstance(db, &sqlite.Config{})
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -37,7 +37,7 @@ var initCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		m, err := migrate.NewWithInstance("file", fSrc, "sqlite3", instance)
+		m, err := migrate.NewWithInstance("file", fSrc, "sqlite", instance)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -46,6 +46,5 @@ var initCmd = &cobra.Command{
 		if err := m.Up(); err != nil {
 			log.Fatal(err)
 		}
-
 	},
 }

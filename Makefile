@@ -1,5 +1,5 @@
 create-migration:
-	migrate create -ext sql -dir . ${FILENAME}
+	migrate create -seq -ext sql -dir . ${FILENAME}
 .PHONY: create-migration
 
 migrate-up:

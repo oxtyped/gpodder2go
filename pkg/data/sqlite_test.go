@@ -48,7 +48,7 @@ func TestAddEpisodeHistory(t *testing.T) {
 
 	user := &User{Name: "test"}
 
-	device := Device{Name: "testdevice", Type: "laptop", User: user}
+	device := Device{Name: "testdevice", Type: "laptop", User: user, Id: "testdevice_id"}
 
 	// doit
 	timenow := CustomTimestamp{}
@@ -57,7 +57,7 @@ func TestAddEpisodeHistory(t *testing.T) {
 	e := EpisodeAction{
 		Podcast:   "http://podcast.com/rss.xml",
 		Episode:   "episode 232",
-		Device:    device,
+		Device:    device.Id,
 		Action:    "PLAYING",
 		Timestamp: timenow,
 	}
@@ -86,12 +86,14 @@ func TestAddSubscriptionHistory(t *testing.T) {
 		t.Fatalf("error setting up devices: %#v", err)
 	}
 
+	now := CustomTimestamp{Time: time.Now()}
+
 	s := Subscription{
 		User:      "somename",
 		Device:    "testdevice",
 		Podcast:   "podcasturl",
 		Action:    "SUBSCRIBE",
-		Timestamp: time.Now(),
+		Timestamp: now,
 	}
 
 	err = data.AddSubscriptionHistory(s)

@@ -1,12 +1,12 @@
 package middleware
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
 	b64 "encoding/base64"
 	"log"
 	"net/http"
-	"strings"
 )
 
 func Verify(key string, noAuth bool) func(http.Handler) http.Handler {
@@ -25,22 +25,29 @@ func Verify(key string, noAuth bool) func(http.Handler) http.Handler {
 				return
 			}
 
-			decodedStr, err := b64.StdEncoding.DecodeString(ck.Value)
+			session, err := b64.StdEncoding.DecodeString(ck.Value)
 			if err != nil {
 				w.WriteHeader(400)
 				log.Println(err)
 				return
 			}
 
-			parsedStr := strings.Split(string(decodedStr), ".")
+			i := bytes.LastIndexByte(session, '.')
+			if i < 0 {
+				w.WriteHeader(400)
+				log.Println("invalid cookie format")
+				return
+			}
 
-			signature := parsedStr[0]
-			username := parsedStr[1]
+			var (
+				sign = session[:i]
+				user = session[i+1:] // FIXME: how to handle usernames with a dot '.' ?
+			)
 
 			mac := hmac.New(sha256.New, []byte(key))
-			mac.Write([]byte(username))
+			mac.Write(user)
 
-			if !hmac.Equal([]byte(signature), mac.Sum(nil)) {
+			if !hmac.Equal([]byte(sign), mac.Sum(nil)) {
 				w.WriteHeader(401)
 				return
 

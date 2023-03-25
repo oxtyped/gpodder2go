@@ -72,8 +72,6 @@ Alternatively, you can switch to use [Antennapod](https://antennapod.org/) which
 
 ### Development
 
-No real dependencies other than having sqlite3 installed.
-
 ```
 $ go run main.go
 ```

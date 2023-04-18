@@ -57,7 +57,7 @@ func TestAddEpisodeHistory(t *testing.T) {
 	e := EpisodeAction{
 		Podcast:   "http://podcast.com/rss.xml",
 		Episode:   "episode 232",
-		Device:    device,
+		Device:    device.Name,
 		Action:    "PLAYING",
 		Timestamp: timenow,
 	}
@@ -91,7 +91,7 @@ func TestAddSubscriptionHistory(t *testing.T) {
 		Device:    "testdevice",
 		Podcast:   "podcasturl",
 		Action:    "SUBSCRIBE",
-		Timestamp: time.Now(),
+		Timestamp: CustomTimestamp{Time: time.Now()},
 	}
 
 	err = data.AddSubscriptionHistory(s)

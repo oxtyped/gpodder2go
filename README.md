@@ -31,9 +31,8 @@ gpodder2go requires a database to manage the subscription and user states. Curre
 
 ### Quickstart
 
-1. Pull the entire source code
-2. Download the [respective binary](https://github.com/oxtyped/gpodder2go/releases) and put it in the project repository root
-3. Initialize the necessary database and configurations
+1. Download the [respective binary](https://github.com/oxtyped/gpodder2go/releases)
+2. Initialize the necessary database and configurations
 
 ```
 $ ./gpodder2go init
@@ -41,7 +40,7 @@ $ ./gpodder2go init
 
 4. Start the gpodder server
 ```
-$ VERIFIER_SECRET_KEY="" gpodder2go serve
+$ VERIFIER_SECRET_KEY="" ./gpodder2go serve
 ```
 
 **Note**: `VERIFIER_SECRET_KEY` is a required env var. This value will be used to sign and verify the sessionid which will be used to authenticate users.

@@ -32,7 +32,7 @@ func TestAddEpisodeHistory(t *testing.T) {
 	data := NewSQLite("testme.db")
 	db := data.db
 
-	//	defer cleanup(t, db)
+	cleanup(t, db)
 
 	// setup
 	_, err := db.Exec("INSERT INTO users (id, username, password, email, name) VALUES (1, 'test', 'test1024', 'test@test.com', 'somename')")
@@ -74,9 +74,9 @@ func TestAddSubscriptionHistory(t *testing.T) {
 	data := NewSQLite("testme.db")
 	db := data.db
 
-	//	defer cleanup(t, db)
+	cleanup(t, db)
 
-	_, err := db.Exec("INSERT INTO users (id, username, password, email, name) VALUES (1, 'test', 'test1024', 'test@test.com', 'somename')")
+	_, err := db.Exec("INSERT INTO users (id, username, password, email, name) VALUES (1, 'somename', 'test1024', 'test@test.com', 'somename')")
 	if err != nil {
 		t.Fatalf("error setting up user: %#v", err)
 	}

@@ -482,8 +482,20 @@ func (e *EpisodeAPI) HandleEpisodeAction(w http.ResponseWriter, r *http.Request)
 	// since (int) optional also, if no actions, then release all
 	// aggregated (bool)
 
+	username := chi.URLParam(r, "username")
+	device := r.URL.Query().Get("device")
+	since := r.URL.Query().Get("since")
+
+	actions, err := e.Data.RetrieveEpisodeActionHistory(username, device, since)
+
+	if err != nil {
+		log.Printf("error retrieving episodes actions output: %#v", err)
+		w.WriteHeader(400)
+		return
+	}
+
 	episodeActionOutput := &EpisodeActionOutput{
-		Actions:   []data.EpisodeAction{},
+		Actions:   actions,
 		Timestamp: timestamp.Now(),
 	}
 

@@ -85,3 +85,31 @@ Add with:
 ```
 # eselect repository add seiga git https://github.com/seigakaku/gentoo_ebuilds
 ```
+
+### Docker
+
+Build with:
+
+```
+$ git clone https://github.com/oxtyped/gpodder2go
+$ cd gpodder2go
+$ docker build -t oxtyped/gpodder2go .
+```
+
+Run with:
+
+```
+$ docker run --rm -it -p 3005:3005 oxtyped/gpodder2go
+```
+
+For persistent data, you can map `/data` as a volume:
+
+```
+$ docker run --rm -it -v /gpodder2go_data:/data -p 3005:3005 oxtyped/gpodder2go
+```
+
+To add a user:
+
+```
+$ docker run --rm -it -v /gpodder2go_data:/data oxtyped/gpodder2go /gpodder2go accounts create <username> --email="<email>" --name="<display_name>" --password="<password>"
+```

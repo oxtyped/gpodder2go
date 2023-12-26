@@ -11,7 +11,7 @@ type DataInterface interface {
 	AddSubscriptionHistory(Subscription) error
 	RetrieveSubscriptionHistory(string, string, time.Time) ([]Subscription, error)
 	AddEpisodeActionHistory(username string, e EpisodeAction) error
-	RetrieveEpisodeActionHistory(username string, deviceId string, since time.Time) ([]EpisodeAction, error)
+	RetrieveEpisodeActionHistory(username string, device string, since string) ([]EpisodeAction, error)
 	//	RetrieveLoginToken(username string, password string) (string, error)
 	RetrieveDevices(username string) ([]Device, error)
 	AddDevice(username string, deviceName string, caption string, deviceType string) error

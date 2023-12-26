@@ -9,6 +9,7 @@ import (
 
 	"github.com/oxtyped/go-opml/opml"
 	"github.com/pkg/errors"
+	"github.com/relvacode/iso8601"
 	_ "modernc.org/sqlite"
 )
 
@@ -129,9 +130,61 @@ func (l *SQLite) AddEpisodeActionHistory(username string, e EpisodeAction) error
 	return nil
 }
 
-func (l *SQLite) RetrieveEpisodeActionHistory(username string, deviceId string, since time.Time) ([]EpisodeAction, error) {
+func (l *SQLite) RetrieveEpisodeActionHistory(username string, device string, since string) ([]EpisodeAction, error) {
+	db := l.db
 
-	return []EpisodeAction{}, nil
+	actions := []EpisodeAction{}
+
+	query := "SELECT a.podcast, a.episode, d.name, a.action, a.position, a.started, a.total, a.timestamp"
+	query = query + " FROM episode_actions as a, devices as d, users as u"
+	query = query + " WHERE a.device_id = d.id AND d.user_id = u.id AND u.name = ?"
+	var args []interface{}
+	args = append(args, username)
+	if device != "" {
+		query = query + " AND d.name = ?"
+		args = append(args, device)
+	}
+	if since != "" {
+		parsedTs, err := iso8601.ParseString(since)
+		if err != nil {
+			return nil, err
+		}
+		query = query + " AND a.timestamp > ?"
+		args = append(args, parsedTs.Unix())
+	}
+	query = query + " ORDER BY a.id"
+	rows, err := db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		a := EpisodeAction{}
+		var ts string
+		err := rows.Scan(
+			&a.Podcast,
+			&a.Episode,
+			&a.Device,
+			&a.Action,
+			&a.Position,
+			&a.Started,
+			&a.Total,
+			&ts,
+		)
+		timestamp := CustomTimestamp{}
+		g, _ := strconv.ParseInt(ts, 10, 64)
+		timestamp.Time = time.Unix(g, 0)
+		a.Timestamp = timestamp
+		if err != nil {
+			log.Printf("error scanning: %#v", err)
+			continue
+		}
+
+		actions = append(actions, a)
+
+	}
+
+	return actions, nil
 }
 
 // GetDevicesFromUsername returns a list of device names that belongs to

@@ -11,8 +11,9 @@ FROM alpine:3.18.4
 RUN mkdir /data
 WORKDIR /data
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /data
+RUN chmod +x /data /entrypoint.sh
 COPY --from=Build /gpodder2go /gpodder2go
+
 EXPOSE 3005
 VOLUME /data
-CMD ["/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]

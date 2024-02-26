@@ -88,6 +88,36 @@ Add with:
 
 ### Docker
 
+```sh
+$ docker run -d \
+--name gpodder2go \
+-p 3005:3005 \
+-v <data_directory>:/data \
+oxtyped/gpodder2go:latest
+```
+
+With docker compose:
+
+```yaml
+version: '3'
+services:
+  gpodder2go:
+    image: oxtyped/gpodder2go:latest
+    ports:
+      - 3005:3005
+    volumes:
+      - ./gpodder2go:/data
+    restart: unless-stopped
+```
+
+To configure the server run
+
+```sh
+$ docker exec --it gpodder2go /gpodder2go ...
+```
+
+#### Build docker image from source
+
 Build with:
 
 ```

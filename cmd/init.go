@@ -22,7 +22,6 @@ var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Setup the necessary environments",
 	Run: func(cmd *cobra.Command, args []string) {
-
 		// create sqlite file
 		// run migration file
 		db, err := sql.Open("sqlite", database)

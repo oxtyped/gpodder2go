@@ -14,8 +14,8 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&database, "database", "d", "g2g.db", "filename of sqlite3 database to use")
-
 }
+
 func Execute() error {
 	return rootCmd.Execute()
 }

@@ -3,8 +3,9 @@ package cmd
 import (
 	"log"
 
-	"github.com/oxtyped/gpodder2go/pkg/data"
 	"github.com/spf13/cobra"
+
+	"github.com/oxtyped/gpodder2go/pkg/data"
 )
 
 var password, email, name string
@@ -17,7 +18,6 @@ func init() {
 	accountsCreateCmd.MarkFlagRequired("password")
 	accountsCreateCmd.MarkFlagRequired("email")
 	accountsCreateCmd.MarkFlagRequired("name")
-
 }
 
 var accountsCreateCmd = &cobra.Command{
@@ -35,7 +35,5 @@ var accountsCreateCmd = &cobra.Command{
 		}
 
 		log.Printf("😍 User %s created!", username)
-		return
-
 	},
 }

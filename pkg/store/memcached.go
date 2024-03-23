@@ -13,14 +13,12 @@ type MemcachedStore struct {
 }
 
 func NewMemcachedStore(hosts string, prefix string) *MemcachedStore {
-
 	cache := memcached.New(hosts)
 	cache.Timeout = 3 * time.Second
 	return &MemcachedStore{
 		Cache:  cache,
 		Prefix: prefix,
 	}
-
 }
 
 func (m *MemcachedStore) Ping() error {
@@ -38,7 +36,6 @@ func (m *MemcachedStore) Get(key string) (string, error) {
 	}
 
 	return string(item.Value), nil
-
 }
 
 func (m *MemcachedStore) Set(key string, value string) error {

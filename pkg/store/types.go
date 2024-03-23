@@ -22,11 +22,9 @@ func NewCacheStore() *LocalCacheStore {
 	}
 
 	return localCacheStore
-
 }
 
 func (s *LocalCacheStore) Get(key string) (string, error) {
-
 	c := s.Cache
 
 	k, ok := c.Get(key)

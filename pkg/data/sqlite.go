@@ -35,11 +35,9 @@ func (s *SQLite) GetUserIdFromName(username string) (int, error) {
 	}
 
 	return userId, nil
-
 }
 
 func (s *SQLite) CheckUserPassword(username, password string) bool {
-
 	var count int
 	db := s.db
 	err := db.QueryRow("SELECT count(*) from users WHERE username = ? AND password = ?", username, password).Scan(&count)
@@ -57,17 +55,15 @@ func (s *SQLite) CheckUserPassword(username, password string) bool {
 }
 
 func (s *SQLite) AddUser(username, password, email, name string) error {
-
 	db := s.db
 	_, err := db.Exec("INSERT INTO users (username, password, email, name) VALUES ($1, $2, $3, $4)", username, password, email, name)
 	if err != nil {
 		return err
 	}
 	return nil
-
 }
-func (s *SQLite) AddDevice(username string, deviceName string, caption string, deviceType string) error {
 
+func (s *SQLite) AddDevice(username string, deviceName string, caption string, deviceType string) error {
 	db := s.db
 	userId, err := s.GetUserIdFromName(username)
 	if err != nil {
@@ -81,11 +77,9 @@ func (s *SQLite) AddDevice(username string, deviceName string, caption string, d
 	}
 
 	return nil
-
 }
 
 func (s *SQLite) RetrieveDevices(username string) ([]Device, error) {
-
 	db := s.db
 	data := []Device{}
 
@@ -111,7 +105,6 @@ func (s *SQLite) RetrieveDevices(username string) ([]Device, error) {
 	}
 
 	return data, nil
-
 }
 
 func (l *SQLite) AddEpisodeActionHistory(username string, e EpisodeAction) error {
@@ -130,7 +123,6 @@ func (l *SQLite) AddEpisodeActionHistory(username string, e EpisodeAction) error
 }
 
 func (l *SQLite) RetrieveEpisodeActionHistory(username string, deviceId string, since time.Time) ([]EpisodeAction, error) {
-
 	return []EpisodeAction{}, nil
 }
 
@@ -145,6 +137,7 @@ func (s *SQLite) GetDevicesFromUsername(username string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var s string
@@ -159,7 +152,6 @@ func (s *SQLite) GetDevicesFromUsername(username string) ([]string, error) {
 	}
 
 	return devices, nil
-
 }
 
 func (s *SQLite) GetDeviceIdFromName(deviceName string, username string) (int, error) {
@@ -177,11 +169,9 @@ func (s *SQLite) GetDeviceIdFromName(deviceName string, username string) (int, e
 	}
 
 	return deviceId, nil
-
 }
 
 func (s *SQLite) AddSubscriptionHistory(sub Subscription) error {
-
 	db := s.db
 
 	username := sub.User
@@ -209,7 +199,6 @@ func (s *SQLite) AddSubscriptionHistory(sub Subscription) error {
 // RetrieveAllDeviceSubscriptions takes in a username and returns an OPML file
 // of all the RSS feeds that the user was subscribed to on the platform
 func (s *SQLite) RetrieveAllDeviceSubscriptions(username string) (string, error) {
-
 	// retrieve all devices's Add
 	// subset it, if it exists anywhere its added
 
@@ -254,13 +243,11 @@ func (s *SQLite) RetrieveAllDeviceSubscriptions(username string) (string, error)
 	wg.Wait()
 
 	return o.XML()
-
 }
 
 // RetrieveDeviceSubscriptions takes in a username and devicename and returns
 // the OPML of its subscriptions
 func (s *SQLite) RetrieveDeviceSubscriptions(username string, deviceName string) (string, error) {
-
 	subs, err := s.RetrieveSubscriptionHistory(username, deviceName, time.Time{})
 	if err != nil {
 		log.Printf("error retrieving subscription history: %#v", err)
@@ -283,7 +270,6 @@ func (s *SQLite) RetrieveDeviceSubscriptions(username string, deviceName string)
 }
 
 func (s *SQLite) RetrieveSubscriptionHistory(username string, deviceName string, since time.Time) ([]Subscription, error) {
-
 	db := s.db
 	userId, err := s.GetUserIdFromName(username)
 	if err != nil {
@@ -302,6 +288,7 @@ func (s *SQLite) RetrieveSubscriptionHistory(username string, deviceName string,
 		log.Printf("error selecting rows: %#v", err)
 		return nil, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		sub := Subscription{}
@@ -324,7 +311,6 @@ func (s *SQLite) RetrieveSubscriptionHistory(username string, deviceName string,
 	}
 
 	return subscriptions, nil
-
 }
 
 func unique(stringSlice []string) []string {

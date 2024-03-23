@@ -3,21 +3,20 @@ package apis
 import (
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
 
-	"encoding/base64"
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"log"
-	"net/http"
-
-	"github.com/go-chi/chi/v5"
-	"github.com/oxtyped/gpodder2go/pkg/data"
-
 	"github.com/augurysys/timestamp"
+	"github.com/go-chi/chi/v5"
+
+	"github.com/oxtyped/gpodder2go/pkg/data"
 )
 
 type Pair struct {
@@ -50,7 +49,6 @@ func (p PairArray) String() string {
 // HandleLogin uses Basic Auth to check on a user's credentials and return a
 // cookie session that will be used for subsequent calls
 func (u *UserAPI) HandleLogin(w http.ResponseWriter, r *http.Request) {
-
 	db := u.Data
 
 	username, password, ok := r.BasicAuth()
@@ -77,8 +75,6 @@ func (u *UserAPI) HandleLogin(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, &cookie)
 	w.WriteHeader(200)
-	return
-
 }
 
 // HandleUserCreate takes in a username and password AND must only be able to be
@@ -105,13 +101,10 @@ func (u *UserAPI) HandleUserCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(201)
-	return
-
 }
 
 // DeviceAPI
 func (d *DeviceAPI) HandleUpdateDevice(w http.ResponseWriter, r *http.Request) {
-
 	// username
 	// deviceid
 
@@ -122,7 +115,7 @@ func (d *DeviceAPI) HandleUpdateDevice(w http.ResponseWriter, r *http.Request) {
 
 	ddr := &DeviceDataRequest{}
 
-	payload, err := ioutil.ReadAll(r.Body)
+	payload, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("error reading body from payload: %#v", err)
 		w.WriteHeader(400)
@@ -151,12 +144,9 @@ func (d *DeviceAPI) HandleUpdateDevice(w http.ResponseWriter, r *http.Request) {
 	// 404
 	// 400
 	w.WriteHeader(200)
-	return
-
 }
 
 func (d *DeviceAPI) HandleGetDevices(w http.ResponseWriter, r *http.Request) {
-
 	type GetDevicesOutput struct {
 		Name          string `json:"id"`
 		Caption       string `json:"caption"`
@@ -213,18 +203,14 @@ func (d *DeviceAPI) HandleGetDevices(w http.ResponseWriter, r *http.Request) {
 
 // TODO: Handle Device Subscription Change
 func (s *SubscriptionAPI) HandleDeviceSubscriptionChange(w http.ResponseWriter, r *http.Request) {
-
 	// username
 	// deviceid
 	// format
 	w.WriteHeader(404)
-	return
-
 }
 
 // API Endpoint: GET /api/2/subscriptions/{username}/{deviceid}.json
 func (s *SubscriptionAPI) HandleGetDeviceSubscriptionChange(w http.ResponseWriter, r *http.Request) {
-
 	// username
 	// deviceid
 	// format
@@ -255,7 +241,7 @@ func (s *SubscriptionAPI) HandleGetDeviceSubscriptionChange(w http.ResponseWrite
 	}
 
 	db := s.Data
-	tm := time.Time{}
+	var tm time.Time
 
 	if since == "0" {
 		tm = time.Unix(0, 0)
@@ -292,13 +278,10 @@ func (s *SubscriptionAPI) HandleGetDeviceSubscriptionChange(w http.ResponseWrite
 
 	w.WriteHeader(200)
 	w.Write(outputPayload)
-	return
-
 }
 
 // API Endpoint: POST /api/2/subscriptions/{username}/{deviceid}.{format}
 func (s *SubscriptionAPI) HandleUploadDeviceSubscriptionChange(w http.ResponseWriter, r *http.Request) {
-
 	// username
 	// deviceid
 	// format
@@ -375,12 +358,9 @@ func (s *SubscriptionAPI) HandleUploadDeviceSubscriptionChange(w http.ResponseWr
 	}
 	w.WriteHeader(200)
 	w.Write(outputBytes)
-	return
-
 }
 
 func (s *SubscriptionAPI) HandleGetSubscription(w http.ResponseWriter, r *http.Request) {
-
 	username := chi.URLParam(r, "username")
 	xml, err := s.Data.RetrieveAllDeviceSubscriptions(username)
 	if err != nil {
@@ -389,11 +369,9 @@ func (s *SubscriptionAPI) HandleGetSubscription(w http.ResponseWriter, r *http.R
 	}
 
 	w.Write([]byte(xml))
-
 }
 
 func (s *SubscriptionAPI) HandleGetDeviceSubscription(w http.ResponseWriter, r *http.Request) {
-
 	username := chi.URLParam(r, "username")
 	deviceId := chi.URLParam(r, "deviceid")
 
@@ -405,12 +383,10 @@ func (s *SubscriptionAPI) HandleGetDeviceSubscription(w http.ResponseWriter, r *
 
 	w.Write([]byte(xml))
 	w.WriteHeader(200)
-
 }
 
 // API Endpoint: POST and PUT /subscriptions/{username}/{deviceid}.{format}
 func (s *SubscriptionAPI) HandleUploadDeviceSubscription(w http.ResponseWriter, r *http.Request) {
-
 	username := chi.URLParam(r, "username")
 	deviceId := chi.URLParam(r, "deviceid")
 	format := chi.URLParam(r, "format")
@@ -428,7 +404,7 @@ func (s *SubscriptionAPI) HandleUploadDeviceSubscription(w http.ResponseWriter, 
 		log.Println("Receive a PUT")
 		log.Printf("Saving subscription...")
 
-		b, _ := ioutil.ReadAll(r.Body)
+		b, _ := io.ReadAll(r.Body)
 
 		var arr []string
 		err := json.Unmarshal(b, &arr)
@@ -465,16 +441,14 @@ func (s *SubscriptionAPI) HandleUploadDeviceSubscription(w http.ResponseWriter, 
 		return
 
 	}
-
 }
 
 // EpisodeAPI
 
 func (e *EpisodeAPI) HandleEpisodeAction(w http.ResponseWriter, r *http.Request) {
-
-	//username
-	//format - defaulting to "json" as per spec
-	//username := chi.URLParam(r, "username")
+	// username
+	// format - defaulting to "json" as per spec
+	// username := chi.URLParam(r, "username")
 
 	// body:
 	// podcast (string) optional
@@ -495,18 +469,16 @@ func (e *EpisodeAPI) HandleEpisodeAction(w http.ResponseWriter, r *http.Request)
 	}
 	w.WriteHeader(200)
 	w.Write(episodeActionOutputBytes)
-	return
-
 }
 
 // POST /api/2/episodes/{username}.json
 func (e *EpisodeAPI) HandleUploadEpisodeAction(w http.ResponseWriter, r *http.Request) {
-	//username
+	// username
 
 	username := chi.URLParam(r, "username")
 	ts := time.Now()
 
-	b, _ := ioutil.ReadAll(r.Body)
+	b, _ := io.ReadAll(r.Body)
 
 	var arr []data.EpisodeAction
 

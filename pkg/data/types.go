@@ -57,12 +57,12 @@ type CustomTimestamp struct {
 }
 
 func (c *CustomTimestamp) UnmarshalJSON(b []byte) error {
-	value := strings.Trim(string(b), `"`) //get rid of "
+	value := strings.Trim(string(b), `"`) // get rid of "
 	if value == "" || value == "null" {
 		return nil
 	}
 
-	t, err := time.Parse("2006-01-02T15:04:05", value) //parse time
+	t, err := time.Parse("2006-01-02T15:04:05", value) // parse time
 	if err != nil {
 		return err
 	}

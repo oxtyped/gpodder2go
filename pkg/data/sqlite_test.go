@@ -65,12 +65,10 @@ func TestAddEpisodeHistory(t *testing.T) {
 	if err != nil {
 		t.Errorf("expecting no error adding episodeaction but got %#v", err)
 	}
-
 }
 
 // Test all the various interface functions for adding of subscription!
 func TestAddSubscriptionHistory(t *testing.T) {
-
 	data := NewSQLite("testme.db")
 	db := data.db
 
@@ -104,5 +102,4 @@ func TestAddSubscriptionHistory(t *testing.T) {
 	// setup Device table
 
 	// Test that can pull the information
-
 }

@@ -4,8 +4,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var apiAddr string
-
 func init() {
 	rootCmd.AddCommand(accountsCmd)
 }

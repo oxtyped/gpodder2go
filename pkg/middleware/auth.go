@@ -10,7 +10,6 @@ import (
 )
 
 func Verify(key string, noAuth bool) func(http.Handler) http.Handler {
-
 	return func(next http.Handler) http.Handler {
 		hfn := func(w http.ResponseWriter, r *http.Request) {
 			if noAuth {

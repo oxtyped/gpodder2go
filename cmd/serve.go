@@ -8,16 +8,20 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+
 	"github.com/oxtyped/gpodder2go/pkg/apis"
 	"github.com/oxtyped/gpodder2go/pkg/data"
 	"github.com/oxtyped/gpodder2go/pkg/store"
 
-	m2 "github.com/oxtyped/gpodder2go/pkg/middleware"
 	"github.com/spf13/cobra"
+
+	m2 "github.com/oxtyped/gpodder2go/pkg/middleware"
 )
 
-var addr string
-var noAuth bool
+var (
+	addr   string
+	noAuth bool
+)
 
 func init() {
 	serveCmd.Flags().StringVarP(&addr, "addr", "b", "localhost:3005", "ip:port for server to be binded to")
@@ -29,7 +33,6 @@ var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Start gpodder2go server",
 	Run: func(cmd *cobra.Command, args []string) {
-
 		verifierSecretKey := os.Getenv("VERIFIER_SECRET_KEY")
 
 		if verifierSecretKey == "" {
@@ -82,7 +85,6 @@ var serveCmd = &cobra.Command{
 
 			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(200)
-				return
 			})
 		})
 
@@ -91,6 +93,5 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
-
 	},
 }

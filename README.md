@@ -93,7 +93,7 @@ $ docker run -d \
 --name gpodder2go \
 -p 3005:3005 \
 -v <data_directory>:/data \
-ghcr.io/oxtyped/gpodder2go:latest
+ghcr.io/oxtyped/gpodder2go:main
 ```
 
 With docker compose:
@@ -102,7 +102,7 @@ With docker compose:
 version: '3'
 services:
   gpodder2go:
-    image: ghcr.io/oxtyped/gpodder2go:latest
+    image: ghcr.io/oxtyped/gpodder2go:main
     ports:
       - 3005:3005
     volumes:

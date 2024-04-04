@@ -3,14 +3,14 @@ create-migration:
 .PHONY: create-migration
 
 migrate-up:
-	migrate -path=cmd/migrations/ -database sqlite://${DB} up
+	migrate -path=cmd/migrations/ -database sqlite3://${DB} up
 .PHONY: migrate-up
 migrate-down:
-	migrate -path=cmd/migrations -database sqlite://${DB} down
+	migrate -path=cmd/migrations -database sqlite3://${DB} down
 .PHONY: migrate-down
 
 migrate-up-docker:
-	docker run -v cmd/migrations:/migrations --network host migrate/migrate -path=/migrations/ -database sqlite://${DB} up 0
+	docker run -v cmd/migrations:/migrations --network host migrate/migrate -path=/migrations/ -database sqlite3://${DB} up 0
 .PHONY: migrate-up-docker
 
 build:

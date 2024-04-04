@@ -12,17 +12,28 @@ type DataInterface interface {
 	RetrieveSubscriptionHistory(string, string, time.Time) ([]Subscription, error)
 	AddEpisodeActionHistory(username string, e EpisodeAction) error
 	RetrieveEpisodeActionHistory(username string, deviceId string, since time.Time) ([]EpisodeAction, error)
-	//	RetrieveLoginToken(username string, password string) (string, error)
-	RetrieveDevices(username string) ([]Device, error)
-	AddDevice(username string, deviceName string, caption string, deviceType string) error
 
+	// Devices
+	RetrieveDevices(username string) ([]Device, error)
+	AddDevice(username string, deviceName string, caption string, deviceType string) (int, error)
+	UpdateOrCreateDevice(username string, deviceName string, caption string, deviceType string) (int, error)
 	RetrieveAllDeviceSubscriptions(username string) (string, error)
 	RetrieveDeviceSubscriptions(username string, deviceNme string) (string, error)
+	GetDeviceIdFromName(deviceName string, username string) (int, error)
+
+	// sync
+	AddSyncGroup(deviceIds []string, username string) error
+	StopDeviceSync(deviceName string, username string) error
+	GetDeviceSyncGroupIds(username string) ([]int, error)
+	GetDevicesInSyncGroupFromDeviceId(deviceId int) ([]int, error)
+	GetDeviceNameFromDeviceSyncGroupId(deviceId int) ([]string, error)
+	GetNotSyncedDevices(username string) ([]string, error)
 }
 
 type Subscription struct {
 	User      string          `json:"user"`
 	Device    string          `json:"device"`
+	Devices   []int           `json:"devices"`
 	Podcast   string          `json:"podcast"`
 	Action    string          `json:"action"`
 	Timestamp CustomTimestamp `json:"timestamp"`
@@ -30,10 +41,10 @@ type Subscription struct {
 
 type Device struct {
 	User    *User  `json:"user"`
-	Id      string `json:"id"`
+	Id      int    `json:"id"`
 	Name    string `json:"name"`
 	Type    string `json:"type"`
-	Caption string `json:"caption"`
+	Caption string `json:"caption"` // To be deprecated
 }
 
 type User struct {
@@ -44,6 +55,7 @@ type EpisodeAction struct {
 	Podcast   string          `json:"podcast"`
 	Episode   string          `json:"episode"`
 	Device    string          `json:"device"`
+	Devices   []int           `json:"devices"`
 	Action    string          `json:"action"`
 	Position  int             `json:"position"`
 	Started   int             `json:"started"`

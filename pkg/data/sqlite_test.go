@@ -25,6 +25,14 @@ func cleanup(t *testing.T, db *sql.DB) {
 	if err != nil {
 		t.Error(err)
 	}
+	_, err = db.Exec("DELETE FROM device_sync_groups")
+	if err != nil {
+		t.Error(err)
+	}
+	_, err = db.Exec("DELETE FROM device_sync_group_devices")
+	if err != nil {
+		t.Error(err)
+	}
 }
 
 // Test
@@ -48,7 +56,7 @@ func TestAddEpisodeHistory(t *testing.T) {
 
 	user := &User{Name: "test"}
 
-	device := Device{Name: "testdevice", Type: "laptop", User: user}
+	device := Device{Id: 1, Name: "testdevice", Type: "laptop", User: user}
 
 	// doit
 	timenow := CustomTimestamp{}
@@ -57,7 +65,7 @@ func TestAddEpisodeHistory(t *testing.T) {
 	e := EpisodeAction{
 		Podcast:   "http://podcast.com/rss.xml",
 		Episode:   "episode 232",
-		Device:    device.Name,
+		Devices:   []int{device.Id},
 		Action:    "PLAYING",
 		Timestamp: timenow,
 	}
@@ -86,7 +94,7 @@ func TestAddSubscriptionHistory(t *testing.T) {
 
 	s := Subscription{
 		User:      "somename",
-		Device:    "testdevice",
+		Devices:   []int{1},
 		Podcast:   "podcasturl",
 		Action:    "SUBSCRIBE",
 		Timestamp: CustomTimestamp{Time: time.Now()},
@@ -102,4 +110,96 @@ func TestAddSubscriptionHistory(t *testing.T) {
 	// setup Device table
 
 	// Test that can pull the information
+}
+
+func TestUpdateOrCreateDevice(t *testing.T) {
+
+	var deviceType string
+
+	data := NewSQLite("testme.db")
+	db := data.db
+
+	cleanup(t, db)
+
+	// setup user
+	err := data.AddUser("username", "pass", "test@test.com", "name")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	deviceId, err := data.UpdateOrCreateDevice("username", "device1", "", "laptop")
+	if err != nil {
+		t.Fatalf("error updating or creating device: %#v", err)
+	}
+
+	updatedDeviceId, err := data.UpdateOrCreateDevice("username", "device1", "", "desktop")
+	if err != nil {
+		t.Fatalf("error updating or creating device: %#v", err)
+	}
+
+	if updatedDeviceId != deviceId {
+		t.Fatalf("expecting deviceId to be %#v after upsert, but got %#v", updatedDeviceId, deviceId)
+	}
+
+	err = db.QueryRow("select type from devices WHERE id = ?;", updatedDeviceId).Scan(&deviceType)
+	if err != nil {
+		t.Fatalf("error selecting name: %#v", err)
+	}
+
+	if deviceType != "desktop" {
+		t.Fatalf("expecting device type to be desktop but got %#v", deviceType)
+
+	}
+
+}
+
+// Test the Sync Group
+func TestAddSyncGroup(t *testing.T) {
+
+	data := NewSQLite("testme.db")
+	db := data.db
+
+	cleanup(t, db)
+
+	// setup user
+	err := data.AddUser("username", "pass", "test@test.com", "name")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = data.AddDevice("username", "device1", "", "laptop")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = data.AddDevice("username", "device2", "", "laptop")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = data.AddDevice("username", "device3", "", "laptop")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// setup device 1, 2 and 3
+
+	err = data.AddSyncGroup([]string{"device1", "device2", "device3"}, "username")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var id int
+	// test that there's a new sync group and a new sync devices
+	err = db.QueryRow("SELECT id from device_sync_groups LIMIT 1").Scan(&id)
+	if err != nil {
+		t.Fatalf("expecting to have a result but instead got sql error: %#v", err)
+	}
+
+	err = db.QueryRow("select COUNT(*) from devices WHERE device_sync_group_id = ?", id).Scan(&id)
+	if err != nil {
+		t.Fatalf("error querying row: %#v", err)
+	}
+
+	if id != 3 {
+		t.Errorf("expecting id to be 3 but got %#v", id)
+	}
 }

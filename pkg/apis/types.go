@@ -29,8 +29,20 @@ type UserAPI struct {
 	verifierSecretKey string
 }
 
+type SyncAPI struct {
+	Data              data.DataInterface
+	verifierSecretKey string
+}
+
 func NewUserAPI(data data.DataInterface, verifierSecretKey string) *UserAPI {
 	return &UserAPI{
+		Data:              data,
+		verifierSecretKey: verifierSecretKey,
+	}
+}
+
+func NewSyncAPI(data data.DataInterface, verifierSecretKey string) *SyncAPI {
+	return &SyncAPI{
 		Data:              data,
 		verifierSecretKey: verifierSecretKey,
 	}
@@ -49,6 +61,11 @@ type SubscriptionChanges struct {
 	Timestamp *timestamp.Timestamp `json:"timestamp"`
 }
 
+type SyncDeviceRequest struct {
+	Synchronize     [][]string `json:"synchronize"`
+	StopSynchronize []string   `json:"stop-synchronize"`
+}
+
 // Outgoing Payload
 
 type SubscriptionChangeOutput struct {
@@ -59,4 +76,9 @@ type SubscriptionChangeOutput struct {
 type EpisodeActionOutput struct {
 	Actions   []data.EpisodeAction `json:"actions"`
 	Timestamp *timestamp.Timestamp `json:"timestamp"`
+}
+
+type SyncDeviceStatus struct {
+	Synchronized   [][]string `json:"synchronized"`
+	NotSynchronize []string   `json:"not-synchronize"`
 }

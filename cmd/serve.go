@@ -54,6 +54,7 @@ var serveCmd = &cobra.Command{
 		subscriptionAPI := apis.SubscriptionAPI{Data: dataInterface}
 		episodeAPI := apis.EpisodeAPI{Data: dataInterface}
 		userAPI := apis.NewUserAPI(dataInterface, verifierSecretKey)
+		syncAPI := apis.NewSyncAPI(dataInterface, verifierSecretKey)
 
 		// TODO: Add the authentication middlewares for the various places
 
@@ -78,6 +79,10 @@ var serveCmd = &cobra.Command{
 			r.Put("/subscriptions/{username}/{deviceid}.{format}", subscriptionAPI.HandleUploadDeviceSubscription)
 			r.Get("/subscriptions/{username}/{deviceid}.{format}", subscriptionAPI.HandleGetDeviceSubscription)
 			r.Get("/subscriptions/{username}.{format}", subscriptionAPI.HandleGetSubscription)
+
+			// sync
+			r.Get("/api/2/sync-devices/{username}.json", syncAPI.HandleGetSync)
+			r.Post("/api/2/sync-devices/{username}.json", syncAPI.HandlePostSync)
 
 			// episodes
 			r.Get("/api/2/episodes/{username}.{format}", episodeAPI.HandleEpisodeAction)

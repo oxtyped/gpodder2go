@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -132,23 +133,20 @@ func (d *DeviceAPI) HandleUpdateDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("DDR is %#v and %#v %#v", ddr, username, deviceName)
-	err = d.Data.AddDevice(username, deviceName, ddr.Caption, ddr.Type)
+
+	_, err = d.Data.UpdateOrCreateDevice(username, deviceName, ddr.Caption, ddr.Type)
 	if err != nil {
 		log.Printf("error adding device: %#v", err)
 		w.WriteHeader(400)
 		return
 	}
 
-	// 200
-	// 401
-	// 404
-	// 400
 	w.WriteHeader(200)
 }
 
 func (d *DeviceAPI) HandleGetDevices(w http.ResponseWriter, r *http.Request) {
 	type GetDevicesOutput struct {
-		Name          string `json:"id"`
+		Id            int    `json:"id"`
 		Caption       string `json:"caption"`
 		Type          string `json:"type"`
 		Subscriptions int    `json:"subscriptions"`
@@ -174,7 +172,7 @@ func (d *DeviceAPI) HandleGetDevices(w http.ResponseWriter, r *http.Request) {
 		// calculate what's the diff
 		add, _ := data.SubscriptionDiff(subs)
 		device := GetDevicesOutput{
-			Name:          v.Name,
+			Id:            v.Id,
 			Caption:       v.Caption,
 			Type:          v.Type,
 			Subscriptions: len(add),
@@ -288,7 +286,7 @@ func (s *SubscriptionAPI) HandleUploadDeviceSubscriptionChange(w http.ResponseWr
 	// add (slice)
 	// remove (slice)
 	username := chi.URLParam(r, "username")
-	deviceId := chi.URLParam(r, "deviceid")
+	deviceIdStr := chi.URLParam(r, "deviceid")
 	format := chi.URLParam(r, "format")
 
 	if format != "json" {
@@ -296,8 +294,15 @@ func (s *SubscriptionAPI) HandleUploadDeviceSubscriptionChange(w http.ResponseWr
 		w.WriteHeader(400)
 		return
 	}
+
+	deviceId, err := s.Data.GetDeviceIdFromName(deviceIdStr, username)
+	if err != nil {
+		log.Printf("error parsing device id: %s", err)
+		w.WriteHeader(500)
+		return
+	}
 	subscriptionChanges := &SubscriptionChanges{}
-	err := json.NewDecoder(r.Body).Decode(&subscriptionChanges)
+	err = json.NewDecoder(r.Body).Decode(&subscriptionChanges)
 	if err != nil {
 
 		log.Printf("error decoding json payload: %#v", err)
@@ -313,11 +318,18 @@ func (s *SubscriptionAPI) HandleUploadDeviceSubscriptionChange(w http.ResponseWr
 
 	db := s.Data
 
+	syncDevices, err := db.GetDevicesInSyncGroupFromDeviceId(deviceId)
+	if err != nil {
+		log.Printf("error trying to retrieve devices in sync_group: %s", err)
+		w.WriteHeader(500)
+		return
+	}
+
 	pairz := []Pair{}
 	for _, v := range addSlice {
 		sub := data.Subscription{
 			User:      username,
-			Device:    deviceId,
+			Devices:   syncDevices,
 			Podcast:   v,
 			Timestamp: ts,
 			Action:    "SUBSCRIBE",
@@ -333,7 +345,7 @@ func (s *SubscriptionAPI) HandleUploadDeviceSubscriptionChange(w http.ResponseWr
 	for _, v := range removeSlice {
 		sub := data.Subscription{
 			User:      username,
-			Device:    deviceId,
+			Devices:   syncDevices,
 			Podcast:   v,
 			Timestamp: ts,
 			Action:    "UNSUBSCRIBE",
@@ -388,7 +400,14 @@ func (s *SubscriptionAPI) HandleGetDeviceSubscription(w http.ResponseWriter, r *
 // API Endpoint: POST and PUT /subscriptions/{username}/{deviceid}.{format}
 func (s *SubscriptionAPI) HandleUploadDeviceSubscription(w http.ResponseWriter, r *http.Request) {
 	username := chi.URLParam(r, "username")
-	deviceId := chi.URLParam(r, "deviceid")
+	deviceIdStr := chi.URLParam(r, "deviceid")
+	deviceId, err := s.Data.GetDeviceIdFromName(deviceIdStr, username)
+	if err != nil {
+		log.Printf("error parsing device id: %s", err)
+		w.WriteHeader(500)
+		return
+	}
+
 	format := chi.URLParam(r, "format")
 	ts := data.CustomTimestamp{}
 	ts.Time = time.Now()
@@ -409,7 +428,9 @@ func (s *SubscriptionAPI) HandleUploadDeviceSubscription(w http.ResponseWriter, 
 		var arr []string
 		err := json.Unmarshal(b, &arr)
 		if err != nil {
-			log.Fatal(err)
+			log.Printf("error unmarshalling payload to json: %s", err)
+			w.WriteHeader(400)
+			return
 		}
 
 		f, err := os.Create(fmt.Sprintf("%s-%s.%s", username, deviceId, format))
@@ -425,7 +446,7 @@ func (s *SubscriptionAPI) HandleUploadDeviceSubscription(w http.ResponseWriter, 
 
 			sub := data.Subscription{
 				User:      username,
-				Device:    deviceId,
+				Devices:   []int{deviceId},
 				Podcast:   v,
 				Action:    "SUBSCRIBE",
 				Timestamp: ts,
@@ -519,4 +540,95 @@ func (e *EpisodeAPI) HandleUploadEpisodeAction(w http.ResponseWriter, r *http.Re
 	w.WriteHeader(200)
 	log.Printf("outputbytes is %#v", string(outputBytes))
 	w.Write(outputBytes)
+}
+
+// GET /api/2/sync-devices/{username}.json
+func (s *SyncAPI) HandleGetSync(w http.ResponseWriter, r *http.Request) {
+
+	//	username := chi.URLParam(r, "username")
+	w.Write([]byte(`{}`))
+}
+
+// POST /api/2/sync-devices/{username}.json
+// This endpoints takes in a SyncDeviceRequest to link up devices together
+func (s *SyncAPI) HandlePostSync(w http.ResponseWriter, r *http.Request) {
+
+	username := chi.URLParam(r, "username")
+	log.Printf("error getting username: %#v", username)
+
+	syncReq := &SyncDeviceRequest{}
+	syncResp := &SyncDeviceStatus{}
+
+	respBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("error reading request body: %#v", err)
+		w.WriteHeader(400)
+		return
+	}
+
+	err = json.Unmarshal(respBody, &syncReq)
+	if err != nil {
+		log.Printf("error unmarshalling sync device request: %#v", err)
+		w.WriteHeader(400)
+		return
+	}
+
+	for _, syncgroups := range syncReq.Synchronize {
+		err := s.Data.AddSyncGroup(syncgroups, username)
+		if err != nil {
+			log.Printf("errors adding sync group: %#v", err)
+			w.WriteHeader(500)
+			return
+		}
+
+	}
+
+	for _, device := range syncReq.StopSynchronize {
+
+		s.Data.StopDeviceSync(device, username)
+
+	}
+
+	// start preparing the response back to the user
+
+	// get all the device_sync group_id belonging to user
+	ids, err := s.Data.GetDeviceSyncGroupIds(username)
+	if err != nil {
+		log.Printf("error getting devices sync groups id from username: %#v", err)
+		w.WriteHeader(500)
+		return
+	}
+
+	for _, deviceSyncGroupId := range ids {
+		devices, err := s.Data.GetDeviceNameFromDeviceSyncGroupId(deviceSyncGroupId)
+		if err != nil {
+			log.Printf("error getting device names from device sync id: %#v", err)
+			w.WriteHeader(500)
+			return
+		}
+
+		syncResp.Synchronized = append(syncResp.Synchronized, devices)
+
+	}
+
+	notSyncedDevices, err := s.Data.GetNotSyncedDevices(username)
+	if err != nil {
+		log.Printf("error getting devices that are not synced: %#v", err)
+		w.WriteHeader(500)
+		return
+	}
+
+	syncResp.NotSynchronize = notSyncedDevices
+
+	respBytes, err := json.Marshal(syncResp)
+	if err != nil {
+		log.Printf("error marshalling json for sync response: %#v", err)
+		w.WriteHeader(500)
+		return
+	}
+
+	w.WriteHeader(200)
+	w.Write(respBytes)
+	return
+
 }

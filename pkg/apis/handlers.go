@@ -433,7 +433,7 @@ func (s *SubscriptionAPI) HandleUploadDeviceSubscription(w http.ResponseWriter, 
 			return
 		}
 
-		f, err := os.Create(fmt.Sprintf("%s-%s.%s", username, deviceId, format))
+		f, err := os.Create(fmt.Sprintf("%s-%d.%s", username, deviceId, format))
 		if err != nil {
 			log.Printf("error saving file: %#v", err)
 			w.WriteHeader(400)

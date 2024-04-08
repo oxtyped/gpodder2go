@@ -545,8 +545,43 @@ func (e *EpisodeAPI) HandleUploadEpisodeAction(w http.ResponseWriter, r *http.Re
 // GET /api/2/sync-devices/{username}.json
 func (s *SyncAPI) HandleGetSync(w http.ResponseWriter, r *http.Request) {
 
-	//	username := chi.URLParam(r, "username")
-	w.Write([]byte(`{}`))
+	username := chi.URLParam(r, "username")
+
+	syncStatus := &SyncDeviceStatus{}
+
+	db := s.Data
+
+	syncIds, err := db.GetDeviceSyncGroupIds(username)
+	if err != nil {
+		log.Printf("error getting sync devices for username (%s): %s", username, err)
+		w.WriteHeader(500)
+		return
+	}
+	notsyncDevices, err := db.GetNotSyncedDevices(username)
+	if err != nil {
+		log.Printf("error getting not_synced devices for username (%s): %s", username, err)
+		w.WriteHeader(500)
+		return
+	}
+
+	syncStatus.NotSynchronize = notsyncDevices
+
+	for _, id := range syncIds {
+		sync, err := db.GetDeviceNameFromDeviceSyncGroupId(id)
+		if err != nil {
+			log.Printf("error retrieving devices from sync group_id: (%d): %s", id, err)
+		}
+
+		syncStatus.Synchronized = append(syncStatus.Synchronized, sync)
+	}
+
+	jsonBytes, err := json.Marshal(syncStatus)
+	if err != nil {
+		log.Printf("error marshalling sync status: %#v", err)
+		w.WriteHeader(500)
+	}
+
+	w.Write(jsonBytes)
 }
 
 // POST /api/2/sync-devices/{username}.json

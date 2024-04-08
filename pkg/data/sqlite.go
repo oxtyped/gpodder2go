@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -589,7 +590,7 @@ func (s *SQLite) GetDeviceSyncGroupIds(username string) ([]int, error) {
 
 	db := s.db
 
-	rows, err := db.Query("select distinct device_sync_group_id from devices WHERE user_id = (select id from users WHERE username = ?);", username)
+	rows, err := db.Query("select device_sync_group_id from device_sync_group_devices WHERE device_id = (SELECT id from devices WHERE user_id = (select id from users WHERE username = ?));", username)
 	if err != nil {
 		return ids, err
 	}
@@ -614,7 +615,7 @@ func (s *SQLite) GetDeviceNameFromDeviceSyncGroupId(id int) ([]string, error) {
 	var names []string
 	db := s.db
 
-	rows, err := db.Query("select name from devices where device_sync_group_id = ?;", id)
+	rows, err := db.Query("select name from devices where id IN (select device_id FROM device_sync_group_devices WHERE device_sync_group_id = ?);", id)
 	if err != nil {
 		return names, err
 	}
@@ -639,7 +640,22 @@ func (s *SQLite) GetNotSyncedDevices(username string) ([]string, error) {
 	var devices []string
 
 	db := s.db
-	rows, err := db.Query("select name from devices where device_sync_group_id = null;")
+
+	userId, err := s.GetUserIdFromName(username)
+	if err != nil {
+		return nil, err
+	}
+	deviceGroupIds, err := s.GetDeviceSyncGroupIds(username)
+	if err != nil {
+		return nil, err
+	}
+	stringValues := []string{}
+	for _, v := range deviceGroupIds {
+		stringValues = append(stringValues, strconv.Itoa(v))
+	}
+	values := strings.Join(stringValues, ",")
+
+	rows, err := db.Query("select name from devices where user_id = $1 AND id NOT IN (select device_id FROM device_sync_group_devices WHERE device_sync_group_id IN ($2));", userId, values)
 	if err != nil {
 		return devices, err
 	}
@@ -647,7 +663,8 @@ func (s *SQLite) GetNotSyncedDevices(username string) ([]string, error) {
 	for rows.Next() {
 
 		var name string
-		if err := rows.Scan(name); err != nil {
+		if err := rows.Scan(&name); err != nil {
+			fmt.Printf("error scanning rows: %#v", err)
 			return devices, err
 		}
 

@@ -325,6 +325,10 @@ func (s *SubscriptionAPI) HandleUploadDeviceSubscriptionChange(w http.ResponseWr
 		return
 	}
 
+	if syncDevices == nil {
+		syncDevices = []int{deviceId}
+	}
+
 	pairz := []Pair{}
 	for _, v := range addSlice {
 		sub := data.Subscription{

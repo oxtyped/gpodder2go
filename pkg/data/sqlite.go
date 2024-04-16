@@ -382,7 +382,9 @@ func unique(stringSlice []string) []string {
 }
 
 // GetDevicesInSyncGroupFromDeviceId takes in a deviceId and returns a list of
-// deviceIds that belongs to the same syncgroup including itself
+// deviceIds that belongs to the same syncgroup including itself. If there's no
+// sync group, it should return a nil to signal that the device has no existing
+// sync_group, but not return an error as it is returning a valid position.
 func (s *SQLite) GetDevicesInSyncGroupFromDeviceId(deviceId int) ([]int, error) {
 
 	var deviceSyncGroupId int
@@ -393,8 +395,12 @@ func (s *SQLite) GetDevicesInSyncGroupFromDeviceId(deviceId int) ([]int, error) 
 	// get the sync group id
 	err := db.QueryRow("select device_sync_group_id from device_sync_group_devices where device_id =? LIMIT 1", deviceId).Scan(&deviceSyncGroupId)
 	if err != nil {
-		log.Printf("error getting device_sync_group_id: %#v", err)
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, nil
+		} else {
+			log.Printf("error getting device_sync_group_id: %#v", err)
+			return nil, err
+		}
 	}
 
 	rows, err := db.Query("select device_id from device_sync_group_devices WHERE device_sync_group_id = ?", deviceSyncGroupId)

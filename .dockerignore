@@ -1,0 +1,7 @@
+.git
+.github
+*~
+Dockerfile
+LICENSE
+README.md
+structure.md

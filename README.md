@@ -58,7 +58,7 @@ Right now it appears that the gpodder client doesn't fully support auth (see: ht
 In order to allow gpodder client access to the gpodder server, please run `gpodder2go` in non-auth mode.
 
 ```
-$ gpodder2go server --no-auth
+$ gpodder2go serve --no-auth
 ```
 
 **Note**: This will allow anyone with access to retrieve your susbcriptions data and list. Please take the necessary steps to secure your instance and data.
@@ -92,6 +92,7 @@ Add with:
 $ docker run -d \
 --name gpodder2go \
 -p 3005:3005 \
+-e NO_AUTH=<true or false> \
 -v <data_directory>:/data \
 ghcr.io/oxtyped/gpodder2go:main
 ```
@@ -105,6 +106,8 @@ services:
     image: ghcr.io/oxtyped/gpodder2go:main
     ports:
       - 3005:3005
+    environment:
+      - NO_AUTH=<true or false>
     volumes:
       - ./gpodder2go:/data
     restart: unless-stopped

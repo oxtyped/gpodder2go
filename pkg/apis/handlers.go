@@ -146,7 +146,7 @@ func (d *DeviceAPI) HandleUpdateDevice(w http.ResponseWriter, r *http.Request) {
 
 func (d *DeviceAPI) HandleGetDevices(w http.ResponseWriter, r *http.Request) {
 	type GetDevicesOutput struct {
-		Id            int    `json:"id"`
+		Id            string `json:"id"` // This is not to be confused with the database "Id". This is the DeviceId that will be referenced throughout the various calls
 		Caption       string `json:"caption"`
 		Type          string `json:"type"`
 		Subscriptions int    `json:"subscriptions"`
@@ -172,7 +172,7 @@ func (d *DeviceAPI) HandleGetDevices(w http.ResponseWriter, r *http.Request) {
 		// calculate what's the diff
 		add, _ := data.SubscriptionDiff(subs)
 		device := GetDevicesOutput{
-			Id:            v.Id,
+			Id:            v.Name,
 			Caption:       v.Caption,
 			Type:          v.Type,
 			Subscriptions: len(add),

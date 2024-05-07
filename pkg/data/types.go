@@ -41,8 +41,8 @@ type Subscription struct {
 
 type Device struct {
 	User    *User  `json:"user"`
-	Id      int    `json:"id"`
-	Name    string `json:"name"`
+	Id      int    `json:"id"`   // This is just a database ID and not to be confused with DeviceId
+	Name    string `json:"name"` // Name is represents the actual DeviceId that is referenced in handlers
 	Type    string `json:"type"`
 	Caption string `json:"caption"` // To be deprecated
 }

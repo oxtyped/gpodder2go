@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"log"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
+
+	"github.com/jmoiron/sqlx"
 
 	"github.com/oxtyped/go-opml/opml"
 	"github.com/pkg/errors"
@@ -454,6 +455,8 @@ func (s *SQLite) AddSyncGroup(device_names []string, username string) error {
 
 		device_ids = append(device_ids, i)
 	}
+
+	fmt.Printf("device_ids is %#v", device_ids)
 	// get device_ids
 
 	// do a check if device_ids all belong to the user. If it doesn't, send out an
@@ -585,7 +588,7 @@ func (s *SQLite) AddSyncGroup(device_names []string, username string) error {
 func (s *SQLite) StopDeviceSync(deviceName string, username string) error {
 	db := s.db
 
-	_, err := db.Exec("UPDATE devices SET device_sync_group_id = NULL WHERE name = ? AND user_id = (SELECT id from users WHERE username = ?", deviceName, username)
+	_, err := db.Exec("UPDATE devices SET device_sync_group_id = NULL WHERE name = ? AND user_id = (SELECT id from users WHERE username = ?)", deviceName, username)
 	return err
 
 }
@@ -596,7 +599,7 @@ func (s *SQLite) GetDeviceSyncGroupIds(username string) ([]int, error) {
 
 	db := s.db
 
-	rows, err := db.Query("select device_sync_group_id from device_sync_group_devices WHERE device_id = (SELECT id from devices WHERE user_id = (select id from users WHERE username = ?));", username)
+	rows, err := db.Query("select DISTINCT device_sync_group_id from devices WHERE user_id = (select id from users where username = ?);", username)
 	if err != nil {
 		return ids, err
 	}
@@ -604,12 +607,14 @@ func (s *SQLite) GetDeviceSyncGroupIds(username string) ([]int, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var id int
+		var id *int
 		if err := rows.Scan(&id); err != nil {
 			return ids, err
 		}
 
-		ids = append(ids, id)
+		if id != nil {
+			ids = append(ids, *id)
+		}
 	}
 
 	return ids, nil
@@ -621,7 +626,7 @@ func (s *SQLite) GetDeviceNameFromDeviceSyncGroupId(id int) ([]string, error) {
 	var names []string
 	db := s.db
 
-	rows, err := db.Query("select name from devices where id IN (select device_id FROM device_sync_group_devices WHERE device_sync_group_id = ?);", id)
+	rows, err := db.Query("select name from devices where device_sync_group_id = ?;", id)
 	if err != nil {
 		return names, err
 	}
@@ -655,13 +660,15 @@ func (s *SQLite) GetNotSyncedDevices(username string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	stringValues := []string{}
-	for _, v := range deviceGroupIds {
-		stringValues = append(stringValues, strconv.Itoa(v))
-	}
-	values := strings.Join(stringValues, ",")
 
-	rows, err := db.Query("select name from devices where user_id = $1 AND id NOT IN (select device_id FROM device_sync_group_devices WHERE device_sync_group_id IN ($2));", userId, values)
+	intValues := []int{}
+	for _, v := range deviceGroupIds {
+		intValues = append(intValues, v)
+	}
+
+	query, args, err := sqlx.In("select name from devices where user_id = ? AND id NOT IN (select id FROM devices WHERE device_sync_group_id IN (?));", userId, intValues)
+
+	rows, err := db.Query(query, args...)
 	if err != nil {
 		return devices, err
 	}

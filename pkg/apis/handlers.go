@@ -593,7 +593,6 @@ func (s *SyncAPI) HandleGetSync(w http.ResponseWriter, r *http.Request) {
 func (s *SyncAPI) HandlePostSync(w http.ResponseWriter, r *http.Request) {
 
 	username := chi.URLParam(r, "username")
-	log.Printf("error getting username: %#v", username)
 
 	syncReq := &SyncDeviceRequest{}
 	syncResp := &SyncDeviceStatus{}
@@ -623,9 +622,7 @@ func (s *SyncAPI) HandlePostSync(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, device := range syncReq.StopSynchronize {
-
 		s.Data.StopDeviceSync(device, username)
-
 	}
 
 	// start preparing the response back to the user

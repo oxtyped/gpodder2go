@@ -9,8 +9,11 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
+	"time"
 
+	"github.com/augurysys/timestamp"
 	"github.com/go-chi/chi/v5"
 	"github.com/oxtyped/gpodder2go/pkg/data"
 )
@@ -43,6 +46,91 @@ func cleanup(t *testing.T, db *sql.DB) {
 		t.Error(err)
 	}
 }
+
+// TestHandleUpdateSubscription tests for the update subscription endpoint to
+// ensure that when a subscription is added on one device, it is also added onto
+// the other sync devices
+func TestHandleUpdateSubscription(t *testing.T) {
+
+	var (
+		subUrl string = "https://rubbishurl.com"
+	)
+	dataInterface := data.NewSQLite("testme.db")
+	db := dataInterface.GetDB()
+	cleanup(t, db)
+
+	username := "username"
+	err := dataInterface.AddUser(username, "pass", "test@test.com", "name")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = dataInterface.AddDevice(username, "device1", "", "laptop")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = dataInterface.AddDevice(username, "device2", "", "laptop")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = dataInterface.AddSyncGroup([]string{"device1", "device2"}, username)
+	if err != nil {
+		t.Fatalf("error adding sync group: %#v", err)
+	}
+
+	syncChanges := &SubscriptionChanges{
+		Add:       []string{subUrl},
+		Timestamp: timestamp.Now(),
+	}
+
+	body, err := json.Marshal(syncChanges)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	subscriptionAPI := SubscriptionAPI{Data: dataInterface}
+	path := fmt.Sprintf("/api/2/subscriptions/%s/%s.json", username, "device1")
+	m := chi.NewRouter()
+	m.Post("/api/2/subscriptions/{username}/{deviceid}.{format}", subscriptionAPI.HandleUploadDeviceSubscriptionChange)
+	ts := httptest.NewServer(m)
+
+	reqBody := bytes.NewBuffer(body)
+	req, err := http.NewRequest("POST", ts.URL+path, reqBody)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Get Subscription from
+	sub1, err := dataInterface.RetrieveSubscriptionHistory("username", "device1", time.Time{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	sub2, err := dataInterface.RetrieveSubscriptionHistory("username", "device2", time.Time{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if sub1[0].Podcast != subUrl {
+		t.Fatalf("sub1 podcast url should be the one defined in the test but instead is %#v", sub1[0].Podcast)
+	}
+
+	if !reflect.DeepEqual(sub1, sub2) {
+		t.Fatal("sub1 and sub2 is not equal")
+
+	}
+
+	if status := resp.StatusCode; status != http.StatusOK {
+		t.Errorf("expecting handler to be ok but instead got: %#v", status)
+	}
+
+}
+
 func TestHandlePostSync(t *testing.T) {
 
 	// test happy path

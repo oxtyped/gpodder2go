@@ -394,7 +394,7 @@ func (s *SQLite) GetDevicesInSyncGroupFromDeviceId(deviceId int) ([]int, error) 
 	db := s.db
 
 	// get the sync group id
-	err := db.QueryRow("select device_sync_group_id from device_sync_group_devices where device_id =? LIMIT 1", deviceId).Scan(&deviceSyncGroupId)
+	err := db.QueryRow("select device_sync_group_id from devices where id =? LIMIT 1", deviceId).Scan(&deviceSyncGroupId)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -404,7 +404,7 @@ func (s *SQLite) GetDevicesInSyncGroupFromDeviceId(deviceId int) ([]int, error) 
 		}
 	}
 
-	rows, err := db.Query("select device_id from device_sync_group_devices WHERE device_sync_group_id = ?", deviceSyncGroupId)
+	rows, err := db.Query("select id from devices WHERE device_sync_group_id = ?", deviceSyncGroupId)
 	if err != nil {
 		log.Printf("error getting devices from sync group: %#v", err)
 		return nil, err

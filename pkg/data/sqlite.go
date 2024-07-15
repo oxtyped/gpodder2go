@@ -388,7 +388,7 @@ func unique(stringSlice []string) []string {
 // sync_group, but not return an error as it is returning a valid position.
 func (s *SQLite) GetDevicesInSyncGroupFromDeviceId(deviceId int) ([]int, error) {
 
-	var deviceSyncGroupId int
+	var deviceSyncGroupId sql.NullInt64
 	var returnedDeviceId int
 	var devicesFromSyncGroup []int
 	db := s.db

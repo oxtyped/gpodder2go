@@ -19,9 +19,15 @@ func Verify(key string, noAuth bool) func(http.Handler) http.Handler {
 
 			ck, err := r.Cookie("sessionid")
 			if err != nil {
-				w.WriteHeader(400)
-				log.Println(err)
-				return
+				if err == http.ErrNoCookie {
+					log.Printf("missing cookie, have you logged in yet: %#v", err)
+					w.WriteHeader(401)
+					return
+				} else {
+					w.WriteHeader(400)
+					log.Printf("error retrieving cookie: %#v", err)
+					return
+				}
 			}
 
 			session, err := b64.StdEncoding.DecodeString(ck.Value)

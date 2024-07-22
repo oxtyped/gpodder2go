@@ -16,6 +16,7 @@ import (
 
 	"github.com/augurysys/timestamp"
 	"github.com/go-chi/chi/v5"
+	"k8s.io/utils/strings/slices"
 
 	"github.com/oxtyped/gpodder2go/pkg/data"
 )
@@ -403,6 +404,12 @@ func (s *SubscriptionAPI) HandleGetDeviceSubscription(w http.ResponseWriter, r *
 
 // API Endpoint: POST and PUT /subscriptions/{username}/{deviceid}.{format}
 func (s *SubscriptionAPI) HandleUploadDeviceSubscription(w http.ResponseWriter, r *http.Request) {
+
+	var (
+		toBeAdded   []string
+		toBeRemoved []string
+	)
+
 	username := chi.URLParam(r, "username")
 	deviceIdStr := chi.URLParam(r, "deviceid")
 	deviceId, err := s.Data.GetDeviceIdFromName(deviceIdStr, username)
@@ -445,9 +452,43 @@ func (s *SubscriptionAPI) HandleUploadDeviceSubscription(w http.ResponseWriter, 
 		}
 		defer f.Close()
 
-		// start to write each line by line
-		for _, v := range arr {
+		// get a list of currently subscribed podcasts
+		// iterate through it and then check if it differs with the uploaded
+		// content.
 
+		subscribedPodcasts, err := s.Data.RetrieveDeviceSubscriptionsSlice(username, deviceIdStr)
+		if err != nil {
+			log.Printf("error getting subscriptions: %#v", err)
+			w.WriteHeader(500)
+			return
+		}
+
+		log.Printf("Current subscription on device on server count: %d", len(subscribedPodcasts))
+		log.Printf("Subscription on local machine count: %d", len(arr))
+
+		// there should be some room to optimize these 2 loops, will need to find a
+		// better way
+		for _, v := range arr {
+			// if local subscription is not in subscribed podcast, add it in.
+			if !slices.Contains(subscribedPodcasts, v) {
+				log.Printf("To Be Added: %s\n", v)
+				toBeAdded = append(toBeAdded, v)
+			}
+		}
+
+		for _, v := range subscribedPodcasts {
+
+			// if subscribed podcasts is not in the local subscriptions, remove it
+			if !slices.Contains(arr, v) {
+				log.Printf("To Be Removed: %s\n", v)
+				toBeRemoved = append(toBeRemoved, v)
+
+			}
+
+		}
+
+		// https://github.com/gpodder/mygpo/blob/80c41dc0c9a58dc0e85f6ef56662cdfd0d6e3b16/mygpo/api/simple.py#L213
+		for _, v := range toBeAdded {
 			sub := data.Subscription{
 				User:      username,
 				Devices:   []int{deviceId},
@@ -456,7 +497,16 @@ func (s *SubscriptionAPI) HandleUploadDeviceSubscription(w http.ResponseWriter, 
 				Timestamp: ts,
 			}
 			s.Data.AddSubscriptionHistory(sub)
-			f.WriteString(v + "\n")
+		}
+		for _, v := range toBeRemoved {
+			sub := data.Subscription{
+				User:      username,
+				Devices:   []int{deviceId},
+				Podcast:   v,
+				Action:    "UNSUBSCRIBE",
+				Timestamp: ts,
+			}
+			s.Data.AddSubscriptionHistory(sub)
 		}
 
 		w.WriteHeader(200)
@@ -666,5 +716,3 @@ func (s *SyncAPI) HandlePostSync(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 	w.Write(respBytes)
 	return
-
-}

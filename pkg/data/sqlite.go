@@ -253,6 +253,40 @@ func (s *SQLite) AddSubscriptionHistory(sub Subscription) error {
 	return nil
 }
 
+// RetrieveAllDeviceSubscriptionsSlice takes in a username and returns a slice
+// containing the url of all the subscribed podcasts
+func (s *SQLite) RetrieveAllDeviceSubscriptionsSlice(username string) ([]string, error) {
+
+	// retrieve all devices's Add
+	// subset it, if it exists anywhere its added
+
+	allDevices := []string{}
+
+	// get all devices
+	devices, err := s.GetDevicesFromUsername(username)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf("Retrieving %d devices from user %s", len(devices), username)
+
+	for _, v := range devices {
+		subs, err := s.RetrieveSubscriptionHistory(username, v, time.Time{})
+		if err != nil {
+			log.Printf("error retrieving subscription history: %#v", err)
+
+			return nil, err
+		}
+
+		// calculate what's the diff
+		add, _ := SubscriptionDiff(subs)
+		allDevices = append(allDevices, add...)
+	}
+
+	return allDevices, nil
+
+}
+
 // RetrieveAllDeviceSubscriptions takes in a username and returns an OPML file
 // of all the RSS feeds that the user was subscribed to on the platform
 func (s *SQLite) RetrieveAllDeviceSubscriptions(username string) (string, error) {
@@ -302,6 +336,22 @@ func (s *SQLite) RetrieveAllDeviceSubscriptions(username string) (string, error)
 	return o.XML()
 }
 
+// RetrieveDeviceSubscriptionsSlice takes in a username and devicename and returns
+// a slice of all the urls of the subscribed podcasts on the device
+func (s *SQLite) RetrieveDeviceSubscriptionsSlice(username string, deviceName string) ([]string, error) {
+	subs, err := s.RetrieveSubscriptionHistory(username, deviceName, time.Time{})
+	if err != nil {
+		log.Printf("error retrieving subscription history: %#v", err)
+
+		return nil, err
+	}
+
+	// calculate what's the diff
+	add, _ := SubscriptionDiff(subs)
+
+	return add, nil
+}
+
 // RetrieveDeviceSubscriptions takes in a username and devicename and returns
 // the OPML of its subscriptions
 func (s *SQLite) RetrieveDeviceSubscriptions(username string, deviceName string) (string, error) {
@@ -317,10 +367,12 @@ func (s *SQLite) RetrieveDeviceSubscriptions(username string, deviceName string)
 
 	o := opml.NewOPMLFromBlank("tmpfile")
 	for _, v := range add {
-		err := o.AddRSSFromURL(v, 2*time.Second)
-		if err != nil {
-			log.Printf("error adding RSS feed from URL: %#v", err)
-		}
+		go func() {
+			err := o.AddRSSFromURL(v, 2*time.Second)
+			if err != nil {
+				log.Printf("error adding RSS feed from URL: %#v", err)
+			}
+		}()
 	}
 
 	return o.XML()

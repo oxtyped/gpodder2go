@@ -18,7 +18,9 @@ type DataInterface interface {
 	AddDevice(username string, deviceName string, caption string, deviceType string) (int, error)
 	UpdateOrCreateDevice(username string, deviceName string, caption string, deviceType string) (int, error)
 	RetrieveAllDeviceSubscriptions(username string) (string, error)
+	RetrieveAllDeviceSubscriptionsSlice(username string) ([]string, error)
 	RetrieveDeviceSubscriptions(username string, deviceNme string) (string, error)
+	RetrieveDeviceSubscriptionsSlice(username string, deviceNme string) ([]string, error)
 	GetDeviceIdFromName(deviceName string, username string) (int, error)
 
 	// sync

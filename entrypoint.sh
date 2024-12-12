@@ -1,4 +1,7 @@
 #!/bin/sh
+
+set -e
+
 if [ ! -f "/data/g2g.db" ]; then
     echo "No database found, intializing gpodder2go ..."
     /gpodder2go init

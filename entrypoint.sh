@@ -10,7 +10,7 @@ if [ ! -f "/data/VERIFIER_SECRET_KEY" ]; then
     echo "... VERIFIER_SECRET_KEY initialized"
 fi
 if [ "$NO_AUTH" == true ]; then
-    VERIFIER_SECRET_KEY="$(cat /data/VERIFIER_SECRET_KEY)" /gpodder2go serve --addr "${ADDR:-0.0.0.0:3005}" --no-auth
+    VERIFIER_SECRET_KEY="$(cat /data/VERIFIER_SECRET_KEY)" exec /gpodder2go serve --addr "${ADDR:-0.0.0.0:3005}" --no-auth
 else
-    VERIFIER_SECRET_KEY="$(cat /data/VERIFIER_SECRET_KEY)" /gpodder2go serve --addr "${ADDR:-0.0.0.0:3005}"
+    VERIFIER_SECRET_KEY="$(cat /data/VERIFIER_SECRET_KEY)" exec /gpodder2go serve --addr "${ADDR:-0.0.0.0:3005}"
 fi

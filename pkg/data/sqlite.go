@@ -139,33 +139,72 @@ func (s *SQLite) RetrieveDevices(username string) ([]Device, error) {
 }
 
 func (l *SQLite) AddEpisodeActionHistory(username string, e EpisodeAction) error {
-
 	db := l.db
-	tx, err := db.Begin()
+
+	_, err := db.Exec("INSERT INTO episode_actions(device_id, podcast, episode, action, position, started, total, timestamp) VALUES (?,?,?,?,?,?,?,?)", e.Device, e.Podcast, e.Episode, e.Action, e.Position, e.Started, e.Total, e.Timestamp.Unix())
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
-
-	deviceIds := e.Devices
-
-	for _, deviceId := range deviceIds {
-		//	deviceId, err := l.GetDeviceIdFromName(v, username)
-		//	if err != nil {
-		//		return err
-		//	}
-
-		_, err = tx.Exec("INSERT INTO episode_actions(device_id, podcast, episode, action, position, started, total, timestamp) VALUES (?,?,?,?,?,?,?,?)", deviceId, e.Podcast, e.Episode, e.Action, e.Position, e.Started, e.Total, e.Timestamp.Unix())
-		if err != nil {
-			return err
-		}
-	}
-	tx.Commit()
 	return nil
 }
 
 func (l *SQLite) RetrieveEpisodeActionHistory(username string, deviceId string, since time.Time) ([]EpisodeAction, error) {
-	return []EpisodeAction{}, nil
+	db := l.db
+
+	actions := []EpisodeAction{}
+
+	query := "SELECT a.podcast, a.episode, a.device_id, a.action, a.position, a.started, a.total, a.timestamp"
+	query = query + " FROM episode_actions as a, devices as d, users as u"
+	query = query + " WHERE a.device_id = d.name AND d.user_id = u.id AND u.username = ? ORDER BY a.id"
+	args := []interface{}{username}
+	rows, err := db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		a := EpisodeAction{}
+		var ts string
+		err := rows.Scan(
+			&a.Podcast,
+			&a.Episode,
+			&a.Device,
+			&a.Action,
+			&a.Position,
+			&a.Started,
+			&a.Total,
+			&ts,
+		)
+		if err != nil {
+			log.Printf("error scanning: %#v", err)
+			continue
+		}
+		timestamp := CustomTimestamp{}
+		g, err := strconv.ParseInt(ts, 10, 64)
+		if err != nil {
+			log.Printf("error scanning: %#v", err)
+			continue
+		}
+		timestamp.Time = time.Unix(g, 0)
+		a.Timestamp = timestamp
+
+		// For some reason, the timestamp for episode actions has been stored as
+		// an integer, but in a field of type varchar(255). (that's why you see
+		// the ParseInt call above). So we cannot use a DB query to sort or
+		// filter by timestamp, because the DB would sort the integers
+		// alphabetically. Someone should probably fix that by making a
+		// migration to change the timestamp type in the DB, and then let the DB
+		// handle the filtering.
+		if !since.IsZero() {
+			if a.Timestamp.Before(since) {
+				continue
+			}
+		}
+
+		actions = append(actions, a)
+	}
+
+	return actions, nil
 }
 
 // GetDevicesFromUsername returns a list of device names that belongs to

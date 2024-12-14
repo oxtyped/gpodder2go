@@ -38,7 +38,7 @@ type Subscription struct {
 	Devices   []int           `json:"devices"`
 	Podcast   string          `json:"podcast"`
 	Action    string          `json:"action"`
-	Timestamp CustomTimestamp `json:"timestamp"`
+	Timestamp CustomTimestamp `json:"timestamp"` // sqlite stores this as a varchar(255)
 }
 
 type Device struct {

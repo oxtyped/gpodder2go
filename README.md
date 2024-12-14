@@ -65,9 +65,28 @@ $ gpodder2go serve --no-auth
 
 Alternatively, you can switch to use [Antennapod](https://antennapod.org/) which has implemented the login spec which gpodder2go currently supports.
 
-### Supports
+### Supported Clients
 
-- [Antennapod](https://antennapod.org/)
+#### [Antennapod](https://antennapod.org/)
+
+These features are all working with Antennapod:
+    - Authentication API
+    - Subscriptions API
+    - Episode Actions API
+    - Device API
+    - Device Synchronization API
+
+To start using with two devices, especially if you want to transfer state
+from old_phone to new_phone:
+
+#. Log in with old_phone and force a full sync.
+#. Log in with new_phone, but select old_phone as the device. Subscriptions will sync.
+#. Log out with new_phone.
+#. Log in with new_phone and create a new device ID for it.
+#. Use the API (such as with curl) to [create a sync group](https://gpoddernet.readthedocs.io/en/latest/api/reference/sync.html#device-synchronization-api) with both devices.
+
+After that, episode state will sync between them, and a new subscription on
+either one will propagate to the other.
 
 ### Development
 

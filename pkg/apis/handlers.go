@@ -531,8 +531,31 @@ func (e *EpisodeAPI) HandleEpisodeAction(w http.ResponseWriter, r *http.Request)
 	// since (int) optional also, if no actions, then release all
 	// aggregated (bool)
 
+	username := chi.URLParam(r, "username")
+	device := r.URL.Query().Get("device")
+	since := r.URL.Query().Get("since")
+
+	var parsedTs time.Time
+	if since != "" {
+		sinceInt, err := strconv.Atoi(since)
+		if err != nil {
+			log.Printf("error parsing since: %#v", err)
+			w.WriteHeader(400)
+			return
+		}
+		parsedTs = time.Unix(int64(sinceInt), 0).UTC()
+	}
+
+	actions, err := e.Data.RetrieveEpisodeActionHistory(username, device, parsedTs)
+
+	if err != nil {
+		log.Printf("error retrieving episodes actions output: %#v", err)
+		w.WriteHeader(400)
+		return
+	}
+
 	episodeActionOutput := &EpisodeActionOutput{
-		Actions:   []data.EpisodeAction{},
+		Actions:   actions,
 		Timestamp: timestamp.Now(),
 	}
 
@@ -570,6 +593,8 @@ func (e *EpisodeAPI) HandleUploadEpisodeAction(w http.ResponseWriter, r *http.Re
 		err := e.Data.AddEpisodeActionHistory(username, data)
 		if err != nil {
 			log.Printf("error adding episode action into history: %#v", err)
+			w.WriteHeader(400)
+			return
 		}
 		pair := Pair{
 			data.Episode, data.Episode,

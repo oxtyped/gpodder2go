@@ -65,9 +65,88 @@ $ gpodder2go serve --no-auth
 
 Alternatively, you can switch to use [Antennapod](https://antennapod.org/) which has implemented the login spec which gpodder2go currently supports.
 
+### Self-hosting with an existing nginx server
+
+Assuming you have a public facing server with TLS via letsencrypt on nginx, you can configure like so:
+
+0. Assumptions:
+   - You have built gpodder2go at `~/gpodder2go/gpodder2go`
+   - You have up to date certbot TLS certificate
+   - Your website is enabled in nginx
+
+1. Reverse proxy behind nginx:
+# /etc/nginx/available-sites/yoursite.com
+```
+server {                                                                                                                                                                                                                           
+    listen 3005 ssl;                                                                                                                                                                                                               
+                                                                                                                                                                                                                                   
+    server_name yoursite.com;                                                                                                                                                                                                     
+                                                                                                                                                                                                                                   
+    ssl_certificate /etc/letsencrypt/live/yoursite.com/fullchain.pem;                                                                                                                                                             
+    ssl_certificate_key /etc/letsencrypt/live/yoursite.com/privkey.pem;                                                                                                                                                           
+    include /etc/letsencrypt/options-ssl-nginx.conf;                                                                                                                                                                               
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;                                                                                                                                                                                 
+                                                                                                                                                                                                                                   
+    location / {                                                                                                                                                                                                                   
+            proxy_pass         http://127.0.0.1:3050/;                                                                                                                                                                             
+            proxy_redirect     off;                                                                                                                                                                                                
+                                                                                                                                                                                                                                   
+            proxy_set_header   Host             $host;                                                                                                                                                                             
+            proxy_set_header   X-Real-IP        $remote_addr;                                                                                                                                                                      
+            proxy_set_header   X-Forwarded-For  $proxy_add_x_forwarded_for;                                                                                                                                                        
+                                                                                                                                                                                                                                   
+            client_max_body_size       10m;                                                                                                                                                                                        
+            client_body_buffer_size    128k;                                                                                                                                                                                       
+                                                                                                                                                                                                                                   
+            proxy_connect_timeout      90;                                                                                                                                                                                         
+            proxy_send_timeout         90;                                                                                                                                                                                         
+            proxy_read_timeout         90;                                                                                                                                                                                         
+                                                                                                                                                                                                                                   
+            proxy_buffer_size          4k;                                                                                                                                                                                         
+            proxy_buffers              4 32k;                                                                                                                                                                                      
+            proxy_busy_buffers_size    64k;                                                                                                                                                                                        
+            proxy_temp_file_write_size 64k;                                                                                                                                                                                        
+    }                                                                                                                                                                                                                              
+}                                                                                                                                                                                                                                  
+```
+
+2. A systemd service (customized to my deployment, you'll have to change some user values):
+# /etc/systemd/system/gpodder2go.service
+```
+[Unit]                                                                                                                                                                                                                             
+Description=gpodder2go Service                                                                                                                                                                                                     
+After=network-online.target                                                                                                                                                                                                        
+Wants=network-online.target                                                                                                                                                                                                        
+                                                                                                                                                                                                                                   
+[Service]                                                                                                                                                                                                                          
+Type=simple                                                                                                                                                                                                                        
+ExecStart=/home/youruser/gpodder2go/gpodder2go serve --addr 127.0.0.1:3050                                                                                                                                                              
+WorkingDirectory=/home/youruser/gpodder2go                                                                                                                                                                                              
+# comment this if using a user service                                                                                                                                                                                             
+User=youruser                                                                                                                                                                                                                           
+                                                                                                                                                                                                                                   
+# Environment variable (intentionally left blank)                                                                                                                                                                                  
+Environment=VERIFIER_SECRET_KEY=foo54bar54baz62environmental                                                                                                                                                                       
+                                                                                                                                                                                                                                   
+# ---- Security / sandboxing ----                                                                                                                                                                                                  
+                                                                                                                                                                                                                                   
+# Do not grant any extra privileges                                                                                                                                                                                                
+#NoNewPrivileges=yes                                                                                                                                                                                                               
+                                                                                                                                                                                                                                   
+# Isolate /tmp                                                                                                                                                                                                                     
+PrivateTmp=yes     
+[Install]
+WantedBy=default.target
+```
+
+4. During setup, you'll pick "gpodder.net" and then tick "use custom server" and login with your username and password (not name, not email; see column 2 in g2g.db for this value, or use the username you chose in step 5 above). 
+ You will use the URL "https://yoursite.com:3005". The port here is from the "listen" directive of the nginx config
+
+
 ### Supports
 
 - [Antennapod](https://antennapod.org/)
+- [Kasts](https://apps.kde.org/kasts/)
 
 ### Development
 
